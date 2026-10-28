@@ -1,0 +1,19 @@
+{
+  "name": "@next-devtools/transport-devframe",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@next-devtools/contracts": "workspace:*",
+    "@next-devtools/core": "workspace:*"
+  },
+  "devDependencies": {}
+}

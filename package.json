@@ -1,0 +1,55 @@
+{
+  "name": "react-next-devtools-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Monorepo for the Next.js DevTools platform (work title). See docs/ and packages/.",
+  "packageManager": "bun@1.4.4",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "bun run --filter '*' build",
+    "typecheck": "bun run --filter '*' typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "bun run --filter '*' test",
+    "test:unit": "vitest run",
+    "test:compatibility": "vitest run tests/compatibility",
+    "test:e2e": "playwright test",
+    "test:e2e:webkit": "playwright test -c playwright.webkit.config.ts",
+    "test:e2e:production": "playwright test -c playwright.production.config.ts",
+    "perf:baseline": "bun scripts/performance-baseline.ts",
+    "validate:metadata": "node scripts/release-gates.mjs metadata",
+    "validate:packages": "node scripts/release-gates.mjs packages",
+    "validate:security": "node scripts/security-gate.mjs",
+    "validate:release": "bun run validate:metadata && bun run validate:packages && bunx changeset status",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.1",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^22.20.5",
+    "eslint": "^9.39.5",
+    "prettier": "^3.9.10",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^4.1.12"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "plugins/*",
+    "tests/*",
+    "examples/*"
+  ],
+  "trustedDependencies": [
+    "esbuild",
+    "unrs-resolver"
+  ]
+}

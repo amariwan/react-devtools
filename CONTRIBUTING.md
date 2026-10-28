@@ -68,6 +68,7 @@ Changesets will automatically version packages and update changelogs when a rele
 ## Pull Request Guidelines
 
 Before opening a PR:
+
 1. Read [AGENTS.md](AGENTS.md) and relevant package documentation
 2. Add tests for behavioral changes or bug fixes
 3. Run formatting, lint, typecheck, and relevant focused tests

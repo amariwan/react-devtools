@@ -1,0 +1,42 @@
+{
+  "name": "@next-devtools/ui",
+  "version": "0.0.0",
+  "private": false,
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "bun scripts/build-css.mjs && tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.9.0",
+    "@next-devtools/contracts": "workspace:*",
+    "@next-devtools/core": "workspace:*",
+    "@next-devtools/host-next": "workspace:*",
+    "@next-devtools/plugin-sdk": "workspace:*",
+    "@next-devtools/runtime-react": "workspace:*",
+    "@next-devtools/source-inspector": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.61.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.7.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tailwindcss": "^4.3.3"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19"
+  }
+}

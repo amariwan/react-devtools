@@ -218,23 +218,23 @@ See the [roadmap](docs/roadmap.md), [component inspection](docs/features/compone
 
 ## Documentation
 
-| Topic                       | Guide                                                  |
-| --------------------------- | ------------------------------------------------------ |
-| Component inspection        | [Components](docs/features/components.md)              |
-| Element picking and editors | [Open in Editor](docs/features/open-in-editor.md)      |
-| Routing                     | [Router](docs/features/router.md)                      |
-| Network coverage            | [Network](docs/features/network.md)                    |
-| Rendering and profiling     | [Profiler](docs/features/profiler.md)                  |
-| Agent integration           | [Agent / MCP](docs/features/ai-mcp.md)                 |
-| CLI helpers                 | [CLI](docs/features/cli.md)                            |
-| Security                    | [Security architecture](docs/architecture/security.md) |
-| Browser support             | [Compatibility](docs/testing/browser-compatibility.md) |
-| Changelog                   | [CHANGELOG](CHANGELOG.md)                              |
+| Topic                       | Guide                                                                  |
+| --------------------------- | ---------------------------------------------------------------------- |
+| Component inspection        | [Components](docs/features/components.md)                              |
+| Element picking and editors | [Open in Editor](docs/features/open-in-editor.md)                      |
+| Routing                     | [Router](docs/features/router.md)                                      |
+| Network coverage            | [Network](docs/features/network.md)                                    |
+| Rendering and profiling     | [Profiler](docs/features/profiler.md)                                  |
+| Agent integration           | [Agent / MCP](docs/features/ai-mcp.md)                                 |
+| CLI helpers                 | [CLI](docs/features/cli.md)                                            |
+| Security                    | [Security architecture](docs/architecture/security.md)                 |
+| Browser support             | [Compatibility](docs/testing/browser-compatibility.md)                 |
+| Changelog                   | [CHANGELOG](CHANGELOG.md)                                              |
 | Releases                    | [GitHub Releases](https://github.com/amariwan/react-devtools/releases) |
-| Contributing                | [CONTRIBUTING](CONTRIBUTING.md)                        |
-| Release management          | [Release guide](docs/maintainers/releasing.md)         |
-| Publishing                  | [Publishing details](docs/release/publishing.md)       |
-| Product direction           | [Roadmap](docs/roadmap.md)                             |
+| Contributing                | [CONTRIBUTING](CONTRIBUTING.md)                                        |
+| Release management          | [Release guide](docs/maintainers/releasing.md)                         |
+| Publishing                  | [Publishing details](docs/release/publishing.md)                       |
+| Product direction           | [Roadmap](docs/roadmap.md)                                             |
 
 ## Contributing
 

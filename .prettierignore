@@ -1,0 +1,13 @@
+# Generated / tooling artifacts (not source; not formatted)
+.agents/
+graphify-out/
+skills-lock.json
+packages/ui/src/devtools-css.generated.ts
+
+# Build outputs
+dist
+.next
+node_modules
+coverage
+playwright-report
+test-results

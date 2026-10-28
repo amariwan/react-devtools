@@ -1,0 +1,82 @@
+name: Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: "Stage 1 — Install dependencies"
+        run: bun install --frozen-lockfile
+
+      - name: "Stage 1 — Validate formatting"
+        run: bun run format:check
+
+      - name: "Stage 1 — Validate repository metadata"
+        run: bun run validate:metadata
+
+      - name: "Stage 3 — Build all packages and examples"
+        run: bun run --filter '*' build
+
+      - name: "Stage 1 — Typecheck all packages"
+        run: bun run --filter '*' typecheck
+
+      - name: "Stage 1 — Lint"
+        run: bun run lint
+
+      - name: "Stage 2 — Run unit and contract tests"
+        run: bun run test:unit
+
+      - name: "Stage 2 — Run compatibility and security regression tests"
+        run: bun run test:compatibility
+
+      - name: "Stage 6 — Verify package archives and isolated consumer install"
+        run: bun run validate:packages
+
+      - name: "Stage 6 — Verify release graph and release metadata"
+        run: bun run validate:release
+
+      - name: "Stage 5 — Dependency vulnerability scan"
+        run: bun audit
+
+      - name: "Stage 5 — Secret pattern scan"
+        run: bun run validate:security
+
+      - name: "Stage 5 — Verify production package boundaries"
+        run: bunx vitest run tests/compatibility/open-in-editor.test.ts tests/compatibility/open-in-editor-executable.test.ts
+
+      - name: "Stage 2 — Verify bounded performance baseline"
+        run: bun run perf:baseline
+
+      - name: "Stage 4 — Install Playwright Chromium and WebKit"
+        run: bunx playwright install --with-deps chromium webkit
+
+      - name: "Stage 4 — Run Chromium browser tests"
+        run: bun run test:e2e
+
+      - name: "Stage 4 — Run WebKit browser tests"
+        run: bun run test:e2e:webkit
+
+      - name: "Stage 4 — Run production browser smoke test"
+        run: bun run test:e2e:production

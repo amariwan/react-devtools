@@ -1,0 +1,28 @@
+{
+  "name": "@next-devtools/plugin-network",
+  "version": "0.0.0",
+  "private": false,
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@next-devtools/contracts": "workspace:*",
+    "@next-devtools/core": "workspace:*",
+    "@next-devtools/plugin-sdk": "workspace:*",
+    "react": "^19.0.0",
+    "@next-devtools/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "typescript": "^5.6.0"
+  }
+}

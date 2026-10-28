@@ -1,0 +1,52 @@
+{
+  "name": "@next-devtools/host-next",
+  "version": "0.0.0",
+  "private": false,
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@next-devtools/contracts": "workspace:*",
+    "@next-devtools/source-inspector": "workspace:*"
+  },
+  "devDependencies": {},
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./editor": {
+      "types": "./dist/editor-bridge.d.ts",
+      "default": "./dist/editor-bridge.js"
+    },
+    "./route-index-server": {
+      "types": "./dist/route-index-server.d.ts",
+      "default": "./dist/route-index-server.js"
+    },
+    "./route-scanner": {
+      "types": "./dist/route-scanner.d.ts",
+      "default": "./dist/route-scanner.js"
+    },
+    "./route-runtime": {
+      "types": "./dist/route-runtime.d.ts",
+      "default": "./dist/route-runtime.js"
+    },
+    "./dev-guard": {
+      "types": "./dist/dev-guard.d.ts",
+      "default": "./dist/dev-guard.js"
+    },
+    "./open-in-editor-action": {
+      "types": "./dist/open-in-editor-action.d.ts",
+      "default": "./dist/open-in-editor-action.js"
+    }
+  }
+}

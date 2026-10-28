@@ -1,0 +1,103 @@
+{
+  "name": "@next-devtools/next",
+  "version": "0.0.0",
+  "private": false,
+  "license": "MIT",
+  "description": "Development-only React and Next.js DevTools for Next.js 16 and React 19.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amariwan/react-devtools.git",
+    "directory": "packages/next"
+  },
+  "homepage": "https://github.com/amariwan/react-devtools#readme",
+  "bugs": {
+    "url": "https://github.com/amariwan/react-devtools/issues"
+  },
+  "type": "module",
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    },
+    "./manifest": {
+      "types": "./dist/manifest.d.ts",
+      "default": "./dist/manifest.js"
+    },
+    "./actions": {
+      "types": "./dist/actions.d.ts",
+      "default": "./dist/actions.js"
+    },
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "default": "./dist/config.js"
+    },
+    "./instrumentation-client": {
+      "types": "./dist/instrumentation-client.d.ts",
+      "default": "./dist/instrumentation-client.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "default": "./dist/plugin.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepack": "node -e \"const fs=require('node:fs'),path=require('node:path'); for (const file of fs.readdirSync('dist')) if (file.includes('.test.')) fs.rmSync(path.join('dist',file));\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@next-devtools/contracts": "workspace:*",
+    "@next-devtools/core": "workspace:*",
+    "@next-devtools/host-next": "workspace:*",
+    "@next-devtools/plugin-sdk": "workspace:*",
+    "@next-devtools/runtime-react": "workspace:*",
+    "@next-devtools/source-inspector": "workspace:*",
+    "@next-devtools/ui": "workspace:*",
+    "@next-devtools/plugin-agent-mcp": "workspace:*",
+    "@next-devtools/plugin-components": "workspace:*",
+    "@next-devtools/plugin-css-tailwind": "workspace:*",
+    "@next-devtools/plugin-graph": "workspace:*",
+    "@next-devtools/plugin-network": "workspace:*",
+    "@next-devtools/plugin-overview": "workspace:*",
+    "@next-devtools/plugin-pages": "workspace:*",
+    "@next-devtools/plugin-state-redux": "workspace:*",
+    "@next-devtools/plugin-state-tanstack-query": "workspace:*",
+    "@next-devtools/plugin-state-zustand": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19",
+    "next": ">=16"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    }
+  },
+  "optionalDependencies": {
+    "zustand": ">=4",
+    "@reduxjs/toolkit": ">=2",
+    "@tanstack/react-query": ">=5",
+    "tailwindcss": ">=4"
+  }
+}

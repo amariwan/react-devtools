@@ -1,0 +1,24 @@
+{
+  "name": "@next-devtools/source-inspector",
+  "version": "0.0.0",
+  "private": false,
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@next-devtools/contracts": "workspace:*"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {
+    "react-grab": "^0.2.0"
+  }
+}

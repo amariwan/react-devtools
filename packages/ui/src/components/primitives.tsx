@@ -2,16 +2,15 @@
 
 import * as React from "react";
 import {
-  ChevronDownIcon,
   ChevronRightIcon,
   SearchIcon,
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
-import { cn } from "./lib/utils";
-import { Button } from "./components/ui/button";
-import { Input } from "./components/ui/input";
-import { STATUS_LABELS, statusTone, type StatusTone } from "./status";
+import { cn } from "../lib/utils";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { STATUS_LABELS, statusTone, type StatusTone } from "../helpers/status";
 
 type IconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 
@@ -190,7 +189,7 @@ export function IconButton({
   icon: Icon,
   label,
   variant = "ghost",
-  size = "icon-sm",
+  size = "icon",
   className,
   ...props
 }: IconButtonProps) {
@@ -233,10 +232,13 @@ export function SearchField({
         aria-hidden
       />
       <Input
+        aria-label={props["aria-label"] ?? placeholder ?? "Search"}
+        autoComplete="off"
+        spellCheck={false}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder ?? "Search…"}
-        className="devtools:pl-8"
+        className="devtools:pl-8 devtools:pr-9"
         {...props}
       />
       {value ? (
@@ -244,7 +246,7 @@ export function SearchField({
           type="button"
           onClick={() => onChange("")}
           aria-label="Clear search"
-          className="devtools:absolute devtools:top-1/2 devtools:right-1.5 devtools:-translate-y-1/2 devtools:rounded devtools:p-0.5 devtools:text-muted-foreground devtools:hover:text-foreground"
+          className="devtools:absolute devtools:top-1/2 devtools:right-1.5 devtools:-translate-y-1/2 devtools:flex devtools:size-7 devtools:items-center devtools:justify-center devtools:rounded devtools:text-muted-foreground devtools:hover:text-foreground"
         >
           <XIcon className="devtools:size-3.5" aria-hidden />
         </button>
@@ -270,8 +272,9 @@ export function PanelHeader({
 }: PanelHeaderProps) {
   return (
     <div
+      data-slot="panel-header"
       className={cn(
-        "devtools:flex devtools:items-center devtools:gap-2 devtools:border-b devtools:border-border devtools:px-3 devtools:py-2",
+        "devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-2 devtools:border-b devtools:border-border devtools:bg-card devtools:px-4 devtools:py-3",
         className,
       )}
       {...props}
@@ -281,7 +284,7 @@ export function PanelHeader({
           {title}
         </h2>
         {description ? (
-          <p className="devtools:truncate devtools:text-xs devtools:text-muted-foreground">
+          <p className="devtools:text-xs devtools:leading-relaxed devtools:text-muted-foreground">
             {description}
           </p>
         ) : null}
@@ -304,7 +307,7 @@ export function Toolbar({
   return (
     <div
       className={cn(
-        "devtools:flex devtools:items-center devtools:gap-1 devtools:border-b devtools:border-border devtools:px-2 devtools:py-1",
+        "devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-2 devtools:border-b devtools:border-border devtools:px-2 devtools:py-1",
         className,
       )}
       {...props}
@@ -314,7 +317,7 @@ export function Toolbar({
 
 /* ----------------------------------------------------------- Breadcrumbs */
 
-export interface BreadcrumbItem {
+interface BreadcrumbItem {
   label: string;
   onClick?: () => void;
 }
@@ -401,50 +404,7 @@ export function Switch({
   );
 }
 
-/* --------------------------------------------------------------- Select */
-
-export interface SelectOption {
-  value: string;
-  label: string;
-}
-
-export interface SelectProps {
-  value: string;
-  onChange: (value: string) => void;
-  options: readonly SelectOption[];
-  /** Accessible name. */
-  label?: string;
-  className?: string;
-}
-
-export function Select({
-  value,
-  onChange,
-  options,
-  label,
-  className,
-}: SelectProps) {
-  return (
-    <div className={cn("devtools:relative", className)}>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={label}
-        className="devtools:h-8 devtools:w-full devtools:appearance-none devtools:rounded-lg devtools:border devtools:border-input devtools:bg-transparent devtools:pr-7 devtools:pl-2.5 devtools:text-sm devtools:outline-none devtools:focus-visible:border-ring devtools:focus-visible:ring-3 devtools:focus-visible:ring-ring/50 devtools:dark:bg-input/30"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDownIcon
-        className="devtools:pointer-events-none devtools:absolute devtools:top-1/2 devtools:right-2 devtools:size-3.5 devtools:-translate-y-1/2 devtools:text-muted-foreground"
-        aria-hidden
-      />
-    </div>
-  );
-}
+/* --------------------------------------------------------------- Select (moved to components/ui/select.tsx) */
 
 /* ---------------------------------------------------------- SettingsRow */
 

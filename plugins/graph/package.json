@@ -18,9 +18,12 @@
     "@next-devtools/contracts": "workspace:*",
     "@next-devtools/core": "workspace:*",
     "@next-devtools/plugin-sdk": "workspace:*",
-    "react": "^19.0.0",
+    "@next-devtools/runtime-react": "workspace:*",
     "@next-devtools/ui": "workspace:*",
-    "@next-devtools/runtime-react": "workspace:*"
+    "cytoscape": "^3.34.4",
+    "cytoscape-cose-bilkent": "^4.1.0",
+    "cytoscape-fcose": "^2.2.0",
+    "react": "^19.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

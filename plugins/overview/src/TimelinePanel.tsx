@@ -10,7 +10,16 @@ import {
 } from "@next-devtools/core";
 import { RUNTIME_SERVICE_IDS } from "@next-devtools/contracts";
 import type { TimelineRuntime } from "@next-devtools/core";
-import { EmptyState } from "@next-devtools/ui";
+import {
+  Badge,
+  Button,
+  Checkbox,
+  EmptyState,
+  Label,
+  PanelHeader,
+  Select,
+  Toolbar,
+} from "@next-devtools/ui";
 import { buildTimelineData } from "./timeline-data.js";
 import {
   DEBUG_SESSION_SHARING_KEY,
@@ -195,58 +204,68 @@ export default function TimelinePanel({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div
+      <PanelHeader
+        title="Timeline"
+        actions={
+          <Badge variant="secondary">
+            {data.recording ? "Recording" : "Stopped"} · {data.count} events
+            {data.dropped ? ` · ${data.dropped} dropped` : ""}
+          </Badge>
+        }
+      />
+      <p
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
+          fontSize: 13,
+          color: "var(--muted-foreground, #71717a)",
+          margin: 0,
         }}
       >
-        <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Timeline</h2>
-        <span style={{ fontSize: 11, color: "var(--muted, #71717a)" }}>
-          {data.recording ? "recording" : "stopped"} · {data.count} events
-          {data.dropped ? ` · ${data.dropped} dropped` : ""}
-        </span>
-      </div>
-      <p style={{ fontSize: 13, color: "var(--muted, #71717a)", margin: 0 }}>
         Bounded runtime events from registered DevTools layers. React commit
         profiling is not inferred from this stream.
       </p>
-      <div style={{ display: "flex", gap: 8 }}>
-        <label style={{ fontSize: 12 }}>
+      <Toolbar aria-label="Timeline controls">
+        <Label style={{ fontSize: 12 }}>
           <span style={{ marginRight: 6 }}>Layer</span>
-          <select
+          <Select
             aria-label="Timeline layer filter"
             value={layerFilter}
-            onChange={(event) => updateLayerFilter(event.target.value)}
-          >
-            <option value="">All layers</option>
-            {layers.map((layer) => (
-              <option key={layer} value={layer}>
-                {layer}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="button" onClick={() => service?.startRecording()}>
+            onChange={updateLayerFilter}
+            options={[
+              { value: "", label: "All layers" },
+              ...layers.map((layer) => ({ value: layer, label: layer })),
+            ]}
+          />
+        </Label>
+        <Button
+          type="button"
+          disabled={!service || data.recording}
+          onClick={() => service?.startRecording()}
+        >
           Start recording
-        </button>
-        <button type="button" onClick={() => service?.stopRecording()}>
+        </Button>
+        <Button
+          type="button"
+          disabled={!service || !data.recording}
+          onClick={() => service?.stopRecording()}
+        >
           Stop recording
-        </button>
-        <button type="button" onClick={() => service?.clear()}>
+        </Button>
+        <Button
+          type="button"
+          disabled={!service || data.events.length === 0}
+          onClick={() => service?.clear()}
+        >
           Clear
-        </button>
-        <button type="button" onClick={() => setBaseline(profiler)}>
+        </Button>
+        <Button type="button" onClick={() => setBaseline(profiler)}>
           Capture profiler baseline
-        </button>
+        </Button>
         {baseline && (
-          <button type="button" onClick={() => setBaseline(null)}>
+          <Button type="button" onClick={() => setBaseline(null)}>
             Clear baseline
-          </button>
+          </Button>
         )}
-      </div>
+      </Toolbar>
       <section
         style={{
           border: "1px solid var(--border, #e4e4e7)",
@@ -258,7 +277,7 @@ export default function TimelinePanel({
         <p
           style={{
             fontSize: 11,
-            color: "var(--muted, #71717a)",
+            color: "var(--muted-foreground, #71717a)",
             margin: "0 0 8px",
           }}
         >
@@ -266,31 +285,30 @@ export default function TimelinePanel({
           compare the two most recent captures.
         </p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <label style={{ fontSize: 12, display: "flex", gap: 5 }}>
-            <input
-              type="checkbox"
+          <Label style={{ fontSize: 12, display: "flex", gap: 5 }}>
+            <Checkbox
               checked={shareDebugSessions}
-              onChange={(event) => toggleSharedSessions(event.target.checked)}
+              onCheckedChange={toggleSharedSessions}
             />
             Share across tabs
-          </label>
-          <button type="button" onClick={captureSession}>
+          </Label>
+          <Button type="button" onClick={captureSession}>
             Capture debug session
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={exportLatestSession}
             disabled={debugSessions.length === 0}
           >
             Export latest session
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => setDebugSessions([])}
             disabled={debugSessions.length === 0}
           >
             Clear sessions
-          </button>
+          </Button>
         </div>
         <div style={{ fontSize: 11, marginTop: 8 }}>
           {debugSessions.length} debug session
@@ -336,7 +354,7 @@ export default function TimelinePanel({
               <p
                 style={{
                   fontSize: 11,
-                  color: "var(--muted, #71717a)",
+                  color: "var(--muted-foreground, #71717a)",
                   margin: "0 0 8px",
                 }}
               >
@@ -374,7 +392,7 @@ export default function TimelinePanel({
                 <p
                   style={{
                     fontSize: 11,
-                    color: "var(--muted, #71717a)",
+                    color: "var(--muted-foreground, #71717a)",
                     margin: "0 0 8px",
                   }}
                 >
@@ -443,13 +461,15 @@ export default function TimelinePanel({
                   borderRadius: 4,
                   display: "flex",
                   flexDirection: "column",
-                  gap: 2,
+                  gap: 4,
+                  overflowWrap: "anywhere",
+                  background: "var(--card)",
                 }}
               >
                 <span style={{ fontFamily: "monospace" }}>
                   {event.layer} · {event.type}
                 </span>
-                <span style={{ color: "var(--muted, #71717a)" }}>
+                <span style={{ color: "var(--muted-foreground, #71717a)" }}>
                   {new Date(event.timestampUnixMs).toLocaleTimeString()} ·{" "}
                   {formatPayload(event.payload)}
                 </span>

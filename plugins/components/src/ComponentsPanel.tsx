@@ -5,6 +5,9 @@ import {
   type RuntimeServiceSnapshot,
 } from "@next-devtools/contracts";
 import {
+  Button,
+  PanelHeader,
+  StatusDot,
   EmptyState,
   ElementHighlight,
   ElementPicker,
@@ -210,10 +213,65 @@ export default function ComponentsPanel({
 
   const cancelPick = React.useCallback(() => setPicking(false), []);
 
-  const rows = React.useMemo(
-    () => filterComponentRows(flattenComponentTree(snapshot.data.tree), query),
-    [snapshot.data.tree, query],
+  const [collapsedIds, setCollapsedIds] = React.useState<Set<string>>(
+    () => new Set(),
   );
+  const toggleExpanded = (id: string) =>
+    setCollapsedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const rows = React.useMemo(() => {
+    const flattened = flattenComponentTree(snapshot.data.tree);
+    if (query.trim()) return filterComponentRows(flattened, query);
+    let hiddenBelow: number | null = null;
+    return flattened.filter(({ node, depth }) => {
+      if (hiddenBelow !== null && depth > hiddenBelow) return false;
+      hiddenBelow = collapsedIds.has(node.id) ? depth : null;
+      return true;
+    });
+  }, [snapshot.data.tree, query, collapsedIds]);
+  React.useEffect(() => {
+    setFocusedTreeRow(null);
+    setTreeScrollTop(0);
+    if (treeContainerRef.current) treeContainerRef.current.scrollTop = 0;
+  }, [query, activeRootId]);
+
+  React.useEffect(() => {
+    if (!selectedId) return;
+    // A DOM pick may select a descendant inside a collapsed branch.
+    const ancestors = new Set<string>();
+    let parentId = snapshot.data.tree.find(
+      (node) => node.id === selectedId,
+    )?.parentId;
+    while (parentId && !ancestors.has(parentId)) {
+      ancestors.add(parentId);
+      parentId = snapshot.data.tree.find(
+        (node) => node.id === parentId,
+      )?.parentId;
+    }
+    setCollapsedIds((current) => {
+      if (![...ancestors].some((id) => current.has(id))) return current;
+      return new Set([...current].filter((id) => !ancestors.has(id)));
+    });
+  }, [selectedId, snapshot.data.tree]);
+
+  React.useEffect(() => {
+    const index = rows.findIndex(({ node }) => node.id === selectedId);
+    const container = treeContainerRef.current;
+    if (index < 0 || !container) return;
+    const top = index * TREE_ROW_HEIGHT;
+    if (top < container.scrollTop) container.scrollTop = top;
+    else if (
+      top + TREE_ROW_HEIGHT >
+      container.scrollTop + container.clientHeight
+    )
+      container.scrollTop = top + TREE_ROW_HEIGHT - container.clientHeight;
+    setTreeScrollTop(container.scrollTop);
+  }, [selectedId, rows]);
+
   const firstVisibleRow = Math.max(
     0,
     Math.floor(treeScrollTop / TREE_ROW_HEIGHT) - TREE_OVERSCAN_ROWS,
@@ -297,45 +355,26 @@ export default function ComponentsPanel({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-        }}
-      >
-        <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Components</h2>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span
-            style={{
-              fontSize: 11,
-              color: "var(--muted, #71717a)",
-              fontFamily: "monospace",
-            }}
-          >
-            {snapshot.status}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPicking((value) => !value)}
-            style={{
-              fontSize: 12,
-              padding: "4px 10px",
-              border: "1px solid var(--border, #e4e4e7)",
-              borderRadius: 4,
-              background: picking ? "#2563eb" : "transparent",
-              color: picking ? "#fff" : "inherit",
-              cursor: "pointer",
-            }}
-          >
-            {picking ? "Picking… (Esc to cancel)" : "Pick element"}
-          </button>
-        </div>
-      </div>
+      <PanelHeader
+        title="Components"
+        actions={
+          <>
+            <StatusDot status={snapshot.status} />
+            <Button
+              type="button"
+              aria-pressed={picking}
+              onClick={() => setPicking((value) => !value)}
+            >
+              {picking ? "Picking… (Esc to cancel)" : "Pick element"}
+            </Button>
+          </>
+        }
+      />
 
       {pickedTag ? (
-        <div style={{ fontSize: 11, color: "var(--muted, #71717a)" }}>
+        <div
+          style={{ fontSize: 11, color: "var(--muted-foreground, #71717a)" }}
+        >
           Picked {pickedTag}
           {pickedSourceOrigin ? ` · source: ${pickedSourceOrigin}` : ""}
           {pickedSourceRole ? ` · ${pickedSourceRole}` : ""}
@@ -359,7 +398,7 @@ export default function ComponentsPanel({
           aria-label="Suspense diagnostics"
           style={{
             fontSize: 11,
-            color: "var(--muted, #71717a)",
+            color: "var(--muted-foreground, #71717a)",
             padding: "6px 8px",
             border: "1px solid var(--border, #e4e4e7)",
             borderRadius: 4,
@@ -378,9 +417,8 @@ export default function ComponentsPanel({
 
       {bridgeAvailable ? (
         <div
+          className="devtools-inspector-split"
           style={{
-            display: "flex",
-            gap: 12,
             flex: 1,
             minHeight: 240,
             alignItems: "stretch",
@@ -401,6 +439,7 @@ export default function ComponentsPanel({
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
+                flexWrap: "wrap",
                 padding: 8,
                 borderBottom: "1px solid var(--border, #e4e4e7)",
               }}
@@ -428,7 +467,7 @@ export default function ComponentsPanel({
                   />
                 </div>
               ) : null}
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   void service?.refreshRoots().then((next) => {
@@ -446,7 +485,7 @@ export default function ComponentsPanel({
                 }}
               >
                 Refresh
-              </button>
+              </Button>
             </div>
             <div
               ref={treeContainerRef}
@@ -468,7 +507,7 @@ export default function ComponentsPanel({
                   style={{
                     padding: 16,
                     fontSize: 12,
-                    color: "var(--muted, #71717a)",
+                    color: "var(--muted-foreground, #71717a)",
                     textAlign: "center",
                   }}
                 >
@@ -491,6 +530,7 @@ export default function ComponentsPanel({
                       return (
                         <button
                           key={node.id}
+                          className="devtools-tree-row"
                           ref={(element) => {
                             if (element)
                               treeItemRefs.current.set(node.id, element);
@@ -501,8 +541,12 @@ export default function ComponentsPanel({
                           tabIndex={rowIndex === rovingRowIndex ? 0 : -1}
                           aria-selected={selected}
                           aria-level={depth + 1}
-                          aria-setsize={rows.length}
-                          aria-posinset={rowIndex + 1}
+                          aria-expanded={
+                            node.childIds.length
+                              ? !collapsedIds.has(node.id) ||
+                                Boolean(query.trim())
+                              : undefined
+                          }
                           title={
                             formatSourceLocation(node.source) ??
                             node.displayName
@@ -510,7 +554,31 @@ export default function ComponentsPanel({
                           onClick={() => void selectComponent(node.id)}
                           onFocus={() => setFocusedTreeRow(rowIndex)}
                           onKeyDown={(event) => {
-                            if (event.key === "ArrowDown") {
+                            if (event.key === "ArrowRight") {
+                              event.preventDefault();
+                              if (
+                                node.childIds.length &&
+                                collapsedIds.has(node.id)
+                              )
+                                toggleExpanded(node.id);
+                              else if (rows[rowIndex + 1]?.depth === depth + 1)
+                                focusTreeRow(rowIndex + 1);
+                            } else if (event.key === "ArrowLeft") {
+                              event.preventDefault();
+                              if (
+                                node.childIds.length &&
+                                !collapsedIds.has(node.id) &&
+                                !query.trim()
+                              )
+                                toggleExpanded(node.id);
+                              else {
+                                const parentIndex = rows.findIndex(
+                                  ({ node: candidate }) =>
+                                    candidate.id === node.parentId,
+                                );
+                                if (parentIndex >= 0) focusTreeRow(parentIndex);
+                              }
+                            } else if (event.key === "ArrowDown") {
                               event.preventDefault();
                               focusTreeRow(rowIndex + 1);
                             } else if (event.key === "ArrowUp") {
@@ -538,16 +606,35 @@ export default function ComponentsPanel({
                             padding: `3px 8px 3px ${8 + depth * 14}px`,
                             border: "none",
                             borderLeft: selected
-                              ? "2px solid #2563eb"
+                              ? "2px solid var(--primary)"
                               : "2px solid transparent",
                             background: selected
-                              ? "rgba(37,99,235,0.12)"
+                              ? "var(--accent)"
                               : "transparent",
                             color: "inherit",
                             cursor: "pointer",
                             fontSize: 12,
                           }}
                         >
+                          <span
+                            aria-hidden="true"
+                            onClick={(event) => {
+                              if (!node.childIds.length || query.trim()) return;
+                              event.stopPropagation();
+                              toggleExpanded(node.id);
+                            }}
+                            style={{
+                              width: 14,
+                              flex: "0 0 14px",
+                              color: "var(--muted-foreground)",
+                            }}
+                          >
+                            {node.childIds.length
+                              ? collapsedIds.has(node.id) && !query.trim()
+                                ? "▸"
+                                : "▾"
+                              : ""}
+                          </span>
                           <span
                             style={{
                               overflow: "hidden",
@@ -567,7 +654,7 @@ export default function ComponentsPanel({
                                 width: 6,
                                 height: 6,
                                 borderRadius: "50%",
-                                background: "#2563eb",
+                                background: "var(--primary)",
                                 flex: "0 0 auto",
                               }}
                             />
@@ -576,7 +663,7 @@ export default function ComponentsPanel({
                             style={{
                               marginLeft: "auto",
                               fontSize: 10,
-                              color: "var(--muted, #71717a)",
+                              color: "var(--muted-foreground, #71717a)",
                               flex: "0 0 auto",
                             }}
                           >
@@ -624,7 +711,7 @@ export default function ComponentsPanel({
                       label="Editor"
                     />
                   </div>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => void openSelected()}
                     style={{
@@ -632,13 +719,13 @@ export default function ComponentsPanel({
                       padding: "3px 8px",
                       border: "1px solid var(--border, #e4e4e7)",
                       borderRadius: 4,
-                      background: "#2563eb",
-                      color: "#fff",
+                      background: "var(--primary)",
+                      color: "var(--primary-foreground)",
                       cursor: "pointer",
                     }}
                   >
                     Open
-                  </button>
+                  </Button>
                 </>
               ) : null}
             </div>
@@ -648,7 +735,7 @@ export default function ComponentsPanel({
                   style={{
                     padding: 16,
                     fontSize: 12,
-                    color: "var(--muted, #71717a)",
+                    color: "var(--muted-foreground, #71717a)",
                     textAlign: "center",
                   }}
                 >
@@ -665,7 +752,7 @@ export default function ComponentsPanel({
                       <span
                         style={{
                           fontSize: 10,
-                          color: "var(--muted, #71717a)",
+                          color: "var(--muted-foreground, #71717a)",
                         }}
                       >
                         {selectedNode.kind}
@@ -674,10 +761,15 @@ export default function ComponentsPanel({
                   ) : null}
 
                   <div style={{ fontSize: 11 }}>
-                    <span style={{ color: "var(--muted, #71717a)" }}>
+                    <span style={{ color: "var(--muted-foreground, #71717a)" }}>
                       Source:{" "}
                     </span>
-                    <span style={{ fontFamily: "monospace" }}>
+                    <span
+                      style={{
+                        fontFamily: "monospace",
+                        overflowWrap: "anywhere",
+                      }}
+                    >
                       {formatSourceLocation(sourceTarget) ??
                         "not recorded for this component"}
                     </span>
@@ -688,7 +780,9 @@ export default function ComponentsPanel({
                       role="status"
                       style={{
                         fontSize: 11,
-                        color: openStatus.ok ? "#15803d" : "#b91c1c",
+                        color: openStatus.ok
+                          ? "var(--foreground)"
+                          : "var(--destructive)",
                       }}
                     >
                       {openStatus.text}
@@ -783,7 +877,12 @@ function InspectorSection({
       >
         <span>{title}</span>
         {typeof count === "number" ? (
-          <span style={{ color: "var(--muted, #71717a)", fontWeight: 400 }}>
+          <span
+            style={{
+              color: "var(--muted-foreground, #71717a)",
+              fontWeight: 400,
+            }}
+          >
             {count}
           </span>
         ) : null}

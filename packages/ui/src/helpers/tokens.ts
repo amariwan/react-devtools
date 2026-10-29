@@ -40,13 +40,13 @@ export interface ColorTokens {
 }
 
 export const LIGHT_COLORS: Readonly<ColorTokens> = {
-  base: "#ffffff",
-  subtle: "#f7f7f8",
+  base: "#fafafa",
+  subtle: "#f4f4f5",
   elevated: "#ffffff",
-  text: "#27272a",
-  muted: "#71717a",
-  border: "rgba(113,113,122,0.22)",
-  hover: "rgba(113,113,122,0.10)",
+  text: "#18181b",
+  muted: "#52525b",
+  border: "rgba(82,82,91,0.18)",
+  hover: "rgba(82,82,91,0.08)",
   accent: "#2563eb",
   accentSelected: "#2563eb",
   onAccent: "#ffffff",
@@ -56,13 +56,13 @@ export const LIGHT_COLORS: Readonly<ColorTokens> = {
 };
 
 export const DARK_COLORS: Readonly<ColorTokens> = {
-  base: "#111113",
-  subtle: "#171719",
-  elevated: "#1d1d20",
+  base: "#0e0e10",
+  subtle: "#151518",
+  elevated: "#18181b",
   text: "#e4e4e7",
   muted: "#a1a1aa",
-  border: "rgba(161,161,170,0.22)",
-  hover: "rgba(161,161,170,0.12)",
+  border: "rgba(161,161,170,0.18)",
+  hover: "rgba(161,161,170,0.10)",
   accent: "#60a5fa",
   accentSelected: "#2563eb",
   onAccent: "#ffffff",

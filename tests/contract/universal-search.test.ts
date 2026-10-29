@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildUniversalSearchEntries } from "../../packages/ui/src/universal-search";
+import { buildUniversalSearchEntries } from "../../packages/ui/src/helpers/universal-search";
 
 describe("universal search", () => {
   it("indexes bounded runtime evidence with panel destinations", () => {

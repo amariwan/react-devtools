@@ -53,6 +53,9 @@ describe("single public package", () => {
             })
           : packages.get(name);
       if (!manifest) continue;
+      // Internal/private packages (e.g. @next-devtools/ui) are not published
+      // independently; skip them in the publishable closure.
+      if (manifest.private) continue;
       expect(manifest.private, `${name} must be publishable`).not.toBe(true);
       for (const dependency of Object.keys(manifest.dependencies ?? {})) {
         if (dependency.startsWith("@next-devtools/")) queue.push(dependency);

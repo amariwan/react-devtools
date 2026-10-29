@@ -89,7 +89,7 @@ describe("active panel selection", () => {
 });
 
 describe("shell source hygiene", () => {
-  const files = ["packages/ui/src/shell.tsx", "packages/next/src/client.tsx"];
+  const files = ["packages/ui/src/shell/shell.tsx", "packages/next/src/client.tsx"];
   const debugMarkers = [
     "DEVTOOLS_SHELL_RENDER",
     "OPEN_STATE",

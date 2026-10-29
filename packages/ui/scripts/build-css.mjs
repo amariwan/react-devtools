@@ -7,9 +7,9 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const input = resolve(root, "src/devtools.css");
+const input = resolve(root, "src/css/devtools.css");
 const output = resolve(root, "dist/devtools.css");
-const generated = resolve(root, "src/devtools-css.generated.ts");
+const generated = resolve(root, "src/css/devtools-css.generated.ts");
 
 mkdirSync(resolve(root, "dist"), { recursive: true });
 

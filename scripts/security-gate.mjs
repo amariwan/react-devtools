@@ -16,7 +16,7 @@ const files = execFileSync(
     "-g",
     "!bun.lock",
     "-g",
-    "!packages/ui/src/devtools-css.generated.ts",
+    "!packages/ui/src/css/devtools-css.generated.ts",
   ],
   { encoding: "utf8" },
 )

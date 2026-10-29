@@ -1,7 +1,7 @@
 {
   "name": "@next-devtools/ui",
   "version": "0.0.0",
-  "private": false,
+  "private": true,
   "license": "MIT",
   "files": [
     "dist"

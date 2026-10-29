@@ -2,7 +2,21 @@ import * as React from "react";
 import type { PluginRegistry } from "@next-devtools/core";
 import { RUNTIME_SERVICE_IDS } from "@next-devtools/contracts";
 import type { NetworkRuntimeService } from "@next-devtools/core";
-import { EmptyState } from "@next-devtools/ui";
+import {
+  Badge,
+  Button,
+  EmptyState,
+  PanelHeader,
+  SearchField,
+  Select,
+  Toolbar,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@next-devtools/ui";
 import { buildNetworkData } from "./network-data.js";
 
 export default function NetworkPanel({
@@ -62,158 +76,186 @@ export default function NetworkPanel({
     URL.revokeObjectURL(url);
   };
 
+  const resetFilters = () => {
+    setQuery("");
+    setInitiatorFilter("");
+  };
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-        }}
-      >
-        <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Network</h2>
-        <span style={{ fontSize: 11, color: "var(--muted, #71717a)" }}>
-          {data.recording ? "recording" : "stopped"} · {data.count} entries
-          {data.dropped ? ` · ${data.dropped} dropped` : ""}
-        </span>
-      </div>
-      <p style={{ fontSize: 13, color: "var(--muted, #71717a)", margin: 0 }}>
-        Fetch/XHR metadata with sensitive headers redacted. Browser Network tab
-        remains source for full data.
-      </p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        <button type="button" onClick={() => service?.start()}>
-          Start recording
-        </button>
-        <button type="button" onClick={() => service?.stop()}>
-          Stop recording
-        </button>
-        <button type="button" onClick={() => service?.clear()}>
+    <div className="devtools:flex devtools:min-h-0 devtools:flex-col">
+      <PanelHeader
+        title="Network"
+        description="Resource timing metadata. Full request details remain in browser DevTools."
+        actions={
+          <Badge variant={data.recording ? "default" : "secondary"}>
+            {data.recording ? "Recording" : "Stopped"} · {data.count} requests
+          </Badge>
+        }
+      />
+      <Toolbar className="devtools:flex-wrap devtools:gap-2">
+        <Button
+          variant={data.recording ? "outline" : "default"}
+          disabled={
+            !service || data.status === "unavailable" || data.status === "error"
+          }
+          onClick={() => (data.recording ? service?.stop() : service?.start())}
+        >
+          {data.recording ? "Stop recording" : "Start recording"}
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => service?.clear()}
+          disabled={data.count === 0}
+        >
           Clear
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="outline"
           onClick={exportEntries}
           disabled={visibleEntries.length === 0}
         >
           Export JSON
-        </button>
-        <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span>Search</span>
-          <input
-            aria-label="Network request search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="URL…"
-          />
-        </label>
-        <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span>Initiator</span>
-          <select
-            aria-label="Network initiator filter"
-            value={initiatorFilter}
-            onChange={(event) => setInitiatorFilter(event.target.value)}
-          >
-            <option value="">All</option>
-            {initiators.map((initiator) => (
-              <option key={initiator} value={initiator}>
-                {initiator}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+        </Button>
+        <SearchField
+          aria-label="Network request search"
+          value={query}
+          onChange={setQuery}
+          placeholder="Filter requests by URL…"
+        />
+        <Select
+          aria-label="Network initiator filter"
+          value={initiatorFilter}
+          onChange={setInitiatorFilter}
+          options={[
+            { value: "", label: "All types" },
+            ...initiators.map((value) => ({ value, label: value })),
+          ]}
+        />
+      </Toolbar>
+      {(data.reason || data.dropped > 0) && (
+        <p
+          role="status"
+          className="devtools:px-3 devtools:py-2 devtools:text-xs devtools:text-muted-foreground"
+        >
+          {data.reason}
+          {data.reason && data.dropped > 0 ? " · " : ""}
+          {data.dropped > 0 ? `${data.dropped} older entries dropped` : ""}
+        </p>
+      )}
       {data.entries.length === 0 ? (
         <EmptyState
           title={
             data.status === "available"
-              ? "No network entries captured"
+              ? "No requests captured"
               : "Network capture unavailable"
           }
           description={
-            data.reason ?? "Entries appear once resources are loaded."
+            data.reason ??
+            (data.recording
+              ? "Load a page or trigger a request to capture resource timings."
+              : "Start recording, then trigger a request in your application.")
           }
         />
       ) : visibleEntries.length === 0 ? (
         <EmptyState
-          title="No matching network entries"
-          description="Change the search or initiator filter to see captured entries."
+          title="No matching requests"
+          description="Change the URL search or resource type filter."
+          action={
+            <Button variant="outline" onClick={resetFilters}>
+              Reset filters
+            </Button>
+          }
         />
       ) : (
-        <ul
-          style={{
-            listStyle: "none",
-            padding: 0,
-            margin: 0,
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-            maxHeight: 420,
-            overflow: "auto",
-          }}
-        >
-          {visibleEntries.map((entry) => {
-            const expanded = expandedId === entry.id;
-            return (
-              <li
-                key={entry.id}
-                style={{
-                  fontSize: 11,
-                  padding: "6px 8px",
-                  border: "1px solid var(--border, #e4e4e7)",
-                  borderRadius: 4,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                }}
-              >
-                <button
-                  type="button"
-                  aria-expanded={expanded}
-                  onClick={() => setExpandedId(expanded ? null : entry.id)}
-                  style={{
-                    textAlign: "left",
-                    fontFamily: "monospace",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {entry.url}
-                </button>
-                <span style={{ color: "var(--muted, #71717a)" }}>
-                  {entry.initiatorType}
-                  {entry.status !== undefined
-                    ? ` · ${entry.status}`
-                    : ""} · {Math.round(entry.duration)}ms ·{" "}
-                  {entry.transferSize}B
-                </span>
-                {expanded && (
-                  <dl
-                    style={{
-                      margin: "4px 0 0",
-                      display: "grid",
-                      gridTemplateColumns: "auto 1fr",
-                      gap: "2px 8px",
-                    }}
-                  >
-                    <dt>Start</dt>
-                    <dd style={{ margin: 0 }}>
-                      {entry.startTime.toFixed(2)}ms
-                    </dd>
-                    <dt>Captured</dt>
-                    <dd style={{ margin: 0 }}>{entry.capturedAtUnixMs}</dd>
-                    <dt>Encoded</dt>
-                    <dd style={{ margin: 0 }}>{entry.encodedBodySize}B</dd>
-                    <dt>Decoded</dt>
-                    <dd style={{ margin: 0 }}>{entry.decodedBodySize}B</dd>
-                  </dl>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <div className="devtools:overflow-auto">
+          <Table className="devtools:table-fixed devtools:min-w-[560px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="devtools:w-[45%]">Request</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="devtools:text-right">Duration</TableHead>
+                <TableHead className="devtools:text-right">Size</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {visibleEntries.map((entry) => {
+                const expanded = expandedId === entry.id;
+                return (
+                  <React.Fragment key={entry.id}>
+                    <TableRow>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          aria-expanded={expanded}
+                          onClick={() =>
+                            setExpandedId(expanded ? null : entry.id)
+                          }
+                          className="devtools:w-full devtools:justify-start devtools:font-mono devtools:text-xs"
+                          title={entry.url}
+                        >
+                          <span className="devtools:truncate">{entry.url}</span>
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            entry.status !== undefined && entry.status >= 400
+                              ? "destructive"
+                              : "outline"
+                          }
+                        >
+                          {entry.status ?? "—"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="devtools:text-xs devtools:text-muted-foreground">
+                        {entry.initiatorType}
+                      </TableCell>
+                      <TableCell className="devtools:text-right devtools:font-mono devtools:text-xs devtools:tabular-nums">
+                        {Math.round(entry.duration)} ms
+                      </TableCell>
+                      <TableCell className="devtools:text-right devtools:font-mono devtools:text-xs devtools:tabular-nums">
+                        {entry.transferSize} B
+                      </TableCell>
+                    </TableRow>
+                    {expanded && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="devtools:bg-muted/30">
+                          <dl className="devtools:grid devtools:grid-cols-[auto_1fr] devtools:gap-x-4 devtools:gap-y-2 devtools:px-2 devtools:py-1 devtools:text-xs">
+                            <dt className="devtools:text-muted-foreground">
+                              URL
+                            </dt>
+                            <dd className="devtools:break-all devtools:font-mono">
+                              {entry.url}
+                            </dd>
+                            <dt className="devtools:text-muted-foreground">
+                              Start time
+                            </dt>
+                            <dd>{entry.startTime.toFixed(2)} ms</dd>
+                            <dt className="devtools:text-muted-foreground">
+                              Captured
+                            </dt>
+                            <dd>
+                              {new Date(
+                                entry.capturedAtUnixMs,
+                              ).toLocaleString()}
+                            </dd>
+                            <dt className="devtools:text-muted-foreground">
+                              Encoded / decoded
+                            </dt>
+                            <dd>
+                              {entry.encodedBodySize} B /{" "}
+                              {entry.decodedBodySize} B
+                            </dd>
+                          </dl>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

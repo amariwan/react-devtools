@@ -28,7 +28,8 @@
     "@next-devtools/contracts": "workspace:*",
     "@next-devtools/core": "workspace:*",
     "@next-devtools/plugin-sdk": "workspace:*",
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "@next-devtools/ui": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

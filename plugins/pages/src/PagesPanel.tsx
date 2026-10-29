@@ -2,7 +2,15 @@ import * as React from "react";
 import type { PluginRegistry } from "@next-devtools/core";
 import { RUNTIME_SERVICE_IDS } from "@next-devtools/contracts";
 import type { RouteRuntimeService } from "@next-devtools/host-next/route-runtime";
-import { EmptyState } from "@next-devtools/ui";
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Input,
+  PanelHeader,
+  SearchField,
+  StatusDot,
+} from "@next-devtools/ui";
 import { buildPagesData } from "./pages-data.js";
 
 export default function PagesPanel({ registry }: { registry: PluginRegistry }) {
@@ -76,19 +84,28 @@ export default function PagesPanel({ registry }: { registry: PluginRegistry }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
-        Pages / Router
-      </h2>
-      <div style={{ fontSize: 12, color: "var(--muted, #71717a)" }}>
-        {data.segmentCount} segments · {data.pageCount} pages · active:{" "}
-        {data.activePathname}
+      <PanelHeader
+        title="Pages / Router"
+        description={`${data.segmentCount} segments · ${data.pageCount} pages`}
+        actions={<StatusDot status={data.status} />}
+      />
+      <div
+        style={{
+          fontSize: 12,
+          color: "var(--muted-foreground)",
+          overflowWrap: "anywhere",
+        }}
+      >
+        Current route{" "}
+        <code style={{ color: "var(--foreground)" }}>
+          {data.activePathname}
+        </code>
       </div>
-      <input
-        aria-label="Route search"
+      <SearchField
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
+        onChange={setQuery}
         placeholder="Search routes…"
-        style={{ padding: "5px 8px", fontSize: 12 }}
+        aria-label="Route search"
       />
       {data.pages.length === 0 ? (
         <EmptyState
@@ -124,22 +141,47 @@ export default function PagesPanel({ registry }: { registry: PluginRegistry }) {
             return (
               <li
                 key={page.id}
+                aria-current={
+                  page.urlPattern === data.activePathname ? "page" : undefined
+                }
                 style={{
+                  background:
+                    page.urlPattern === data.activePathname
+                      ? "var(--accent)"
+                      : "var(--card)",
                   fontSize: 12,
                   padding: "6px 8px",
                   border: "1px solid var(--border, #e4e4e7)",
                   borderRadius: 4,
                   display: "flex",
                   justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  alignItems: "center",
                   gap: 8,
                 }}
               >
-                <span style={{ fontFamily: "monospace" }}>
-                  {page.urlPattern}
+                <span
+                  style={{
+                    fontFamily: "monospace",
+                    overflowWrap: "anywhere",
+                    minWidth: 0,
+                  }}
+                >
+                  {page.urlPattern}{" "}
+                  {page.urlPattern === data.activePathname ? (
+                    <Badge variant="secondary">Active</Badge>
+                  ) : null}
                 </span>
-                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    flexWrap: "wrap",
+                  }}
+                >
                   {page.dynamicParamNames.map((name) => (
-                    <input
+                    <Input
                       key={name}
                       aria-label={`Route parameter ${name} for ${page.urlPattern}`}
                       value={values[name] ?? ""}
@@ -156,11 +198,11 @@ export default function PagesPanel({ registry }: { registry: PluginRegistry }) {
                       style={{ width: 90, fontSize: 11, padding: "3px 5px" }}
                     />
                   ))}
-                  <span style={{ color: "var(--muted, #71717a)" }}>
+                  <span style={{ color: "var(--muted-foreground, #71717a)" }}>
                     {page.fileRoles.join(", ")}
                     {page.execution ? ` · ${page.execution}` : ""}
                   </span>
-                  <button
+                  <Button
                     type="button"
                     onClick={() =>
                       navigateToPage(
@@ -178,7 +220,7 @@ export default function PagesPanel({ registry }: { registry: PluginRegistry }) {
                     }
                   >
                     Navigate
-                  </button>
+                  </Button>
                 </span>
               </li>
             );

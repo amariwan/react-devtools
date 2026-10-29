@@ -37,12 +37,10 @@ function asString(value: unknown): string | null {
 
 async function validateRequestContextWithHeaders(): Promise<boolean> {
   try {
-    const importer = new Function("m", "return import(m)") as (
-      m: string,
-    ) => Promise<{
+    const moduleName = "next/headers";
+    const mod = (await import(moduleName)) as {
       headers: () => Promise<{ get(name: string): string | null }>;
-    }>;
-    const mod = await importer("next/headers");
+    };
     const h = await mod.headers();
     const host = h.get("host");
     if (!host) {

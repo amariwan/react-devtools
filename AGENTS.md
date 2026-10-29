@@ -32,3 +32,8 @@ Monorepo for a dynamic, plugin-based Next.js DevTools platform (Next.js 16 / Rea
 - `docs/` (ADRs, capability matrix, verification report, plugin cookbook, bundler diagnostics)
 - Product blueprint is authoritative spec.
 - Design tokens & themes: `docs/DESIGN.md`.
+
+## UI/UX skills (always use)
+
+- For any UI/UX work, always load and apply the `apple-hig` skill (Apple Human Interface Guidelines) and the `ui-ux-pro-max` skill before designing, reviewing, or modifying interfaces.
+- Always use Tailwind CSS with the `devtools:` prefix for styling inside `packages/ui` (see `packages/ui/src/devtools.css`). In plugin/app files outside the Tailwind source scan, prefer inline styles to avoid missing classes.

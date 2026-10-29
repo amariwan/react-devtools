@@ -1,0 +1,397 @@
+@import "tailwindcss" prefix(devtools);
+@source "../";
+@source "../../../../plugins";
+
+/* Dark-mode variant is scoped to the DevTools wrapper, not the host document. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * DevTools design tokens. Defined on the shadow host so they cascade into the
+ * shadow tree and never touch the inspected application. Light is the default
+ * (on `:host`); dark overrides on the wrapper's `[data-theme="dark"]`.
+ */
+:host {
+  color-scheme: light;
+  --background: #fafafa;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #52525b;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #15803d;
+  --success-foreground: #ffffff;
+  --warning: #a16207;
+  --warning-foreground: #ffffff;
+  --info: #0369a1;
+  --info-foreground: #ffffff;
+  --border: rgba(82, 82, 91, 0.18);
+  --input: #e4e4e7;
+  --ring: #2563eb;
+  --radius: 0.375rem;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:
+    0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0e0e10;
+  --foreground: #e4e4e7;
+  --card: #18181b;
+  --card-foreground: #e4e4e7;
+  --popover: #18181b;
+  --popover-foreground: #e4e4e7;
+  --primary: #60a5fa;
+  --primary-foreground: #0e0e10;
+  --secondary: #27272a;
+  --secondary-foreground: #e4e4e7;
+  --muted: #151518;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #e4e4e7;
+  --destructive: #f87171;
+  --destructive-foreground: #0e0e10;
+  --success: #4ade80;
+  --success-foreground: #0e0e10;
+  --warning: #fbbf24;
+  --warning-foreground: #0e0e10;
+  --info: #38bdf8;
+  --info-foreground: #0e0e10;
+  --border: rgba(161, 161, 170, 0.18);
+  --input: #3f3f46;
+  --ring: #60a5fa;
+  --radius: 0.375rem;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md:
+    0 4px 12px -2px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.25);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --radius-sm: 0.25rem;
+  --radius-md: var(--radius);
+  --radius-lg: 0.5rem;
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+}
+
+/* Compact launcher: direct feedback, keyboard parity, and a touch fallback. */
+.devtools-launcher {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  z-index: 2147483647;
+  display: flex;
+  width: 5.25rem;
+  height: 2.75rem;
+  align-items: flex-end;
+  justify-content: center;
+  transform: translate(-50%, 1rem);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.devtools-launcher::before {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 2.25rem;
+  height: 2rem;
+  transform: translateX(-50%);
+  border: 1px solid #262626;
+  border-bottom: 0;
+  border-radius: 1.125rem 1.125rem 0 0;
+  background: #151515;
+  box-shadow: 0 -2px 12px rgb(0 0 0 / 22%);
+  content: "";
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.devtools-launcher::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2rem;
+  border: 1px solid #262626;
+  border-radius: 999px;
+  background: #151515;
+  box-shadow: 0 -2px 12px rgb(0 0 0 / 22%);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.devtools-launcher > * {
+  position: relative;
+  z-index: 1;
+}
+
+.devtools-launcher:is(:hover, [data-expanded="true"]) {
+  align-items: flex-end;
+  transform: translate(-50%, 0);
+}
+
+.devtools-launcher:is(:hover, [data-expanded="true"])::before {
+  opacity: 0;
+}
+
+.devtools-launcher:is(:hover, [data-expanded="true"])::after {
+  opacity: 1;
+}
+
+.devtools-launcher-action {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: inherit;
+  outline: none;
+  transition:
+    background-color 120ms ease,
+    transform 120ms ease,
+    opacity 150ms ease;
+}
+
+.devtools-launcher-logo {
+  position: absolute;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  transform: translateX(-50%);
+}
+
+.devtools-launcher-divider,
+.devtools-launcher-picker {
+  position: absolute;
+}
+
+.devtools-launcher:is(:hover, [data-expanded="true"]) .devtools-launcher-logo,
+.devtools-launcher:is(:hover, [data-expanded="true"])
+  .devtools-launcher-divider,
+.devtools-launcher:is(:hover, [data-expanded="true"])
+  .devtools-launcher-picker {
+  position: absolute;
+  top: calc(100% - 1rem);
+  transform: translateY(-50%);
+}
+
+.devtools-launcher:is(:hover, [data-expanded="true"]) .devtools-launcher-logo {
+  left: 50%;
+  width: 30px;
+  transform: translate(-50%, -50%) !important;
+}
+
+.devtools-launcher:is(:hover, [data-expanded="true"])
+  .devtools-launcher-logo
+  > svg {
+  transform: translateX(-0.75rem);
+}
+
+.devtools-launcher:is(:hover, [data-expanded="true"])
+  .devtools-launcher-divider {
+  left: 50%;
+  margin: 0;
+  transform: translate(-50%, -50%) !important;
+}
+
+.devtools-launcher:is(:hover, [data-expanded="true"])
+  .devtools-launcher-picker {
+  right: 0.25rem;
+  transform: translateY(-50%) scale(1) !important;
+}
+
+.devtools-launcher-action:active {
+  transform: scale(0.96);
+}
+
+.devtools-launcher-action:focus-visible {
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 75%);
+}
+
+.devtools-launcher-divider {
+  width: 1px;
+  height: 1rem;
+  margin: 0 0.15rem;
+  background: rgb(255 255 255 / 20%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.devtools-launcher-picker {
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.85);
+}
+
+.devtools-launcher:is(:hover, [data-expanded="true"])
+  .devtools-launcher-picker {
+  pointer-events: auto;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.devtools-launcher:is(:hover, [data-expanded="true"])
+  .devtools-launcher-divider {
+  pointer-events: none;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .devtools-launcher,
+  .devtools-launcher-action,
+  .devtools-launcher-divider {
+    transition-duration: 1ms;
+  }
+}
+
+/* All product surfaces share the same keyboard, type, and density baseline. */
+[data-devtools-ui] {
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+[data-devtools-ui]
+  :where(
+    button,
+    a,
+    input,
+    select,
+    textarea,
+    summary,
+    [tabindex]
+  ):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+[data-devtools-ui] ::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+[data-devtools-ui] :where(input, textarea) {
+  caret-color: var(--primary);
+}
+[data-devtools-ui] :where(select, option) {
+  color: var(--foreground);
+  background-color: var(--background);
+}
+[data-devtools-ui] :where(pre, code) {
+  font-family: var(--font-mono);
+}
+[data-devtools-ui] * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--input) transparent;
+}
+.devtools-dock {
+  container: devtools / inline-size;
+}
+.devtools-panel {
+  padding: 16px;
+  min-width: 0;
+}
+.devtools-panel > :first-child[data-slot="panel-header"] {
+  margin: -16px -16px 0;
+}
+.devtools-rail {
+  width: 168px;
+}
+.devtools-rail-label {
+  display: inline;
+}
+.devtools-inspector-split {
+  display: flex;
+  min-width: 0;
+  gap: 8px;
+}
+.devtools-tree-row:hover {
+  background: var(--accent) !important;
+}
+.devtools-tree-row[aria-selected="true"] {
+  background: color-mix(
+    in srgb,
+    var(--primary) 12%,
+    var(--background)
+  ) !important;
+  color: var(--primary) !important;
+}
+@container devtools (max-width: 760px) {
+  .devtools-rail {
+    width: 48px;
+  }
+  .devtools-rail-label {
+    display: none;
+  }
+  .devtools-rail-item {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .devtools-inspector-split {
+    flex-direction: column;
+  }
+  .devtools-inspector-divider {
+    display: none;
+  }
+}
+@media (pointer: coarse) {
+  [data-devtools-ui] :where(button, select, summary) {
+    min-height: 40px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-devtools-ui] *,
+  [data-devtools-ui] *::before,
+  [data-devtools-ui] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

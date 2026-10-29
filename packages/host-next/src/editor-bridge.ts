@@ -58,9 +58,21 @@ export async function validateCanonicalEditorPath(
 ): Promise<{ ok: true; canonical: string } | { ok: false; reason: string }> {
   try {
     const canonical = await realpath(requestedPath);
-    const canonicalRoots = await Promise.all(
-      workspaceRoots.map((root) => realpath(root)),
-    );
+    const canonicalRoots = (
+      await Promise.all(
+        workspaceRoots.map(async (root) => {
+          try {
+            return await realpath(root);
+          } catch {
+            return null;
+          }
+        }),
+      )
+    ).filter((root): root is string => root !== null);
+    // If no trusted root could be resolved, fail closed.
+    if (canonicalRoots.length === 0) {
+      return { ok: false, reason: "path_unavailable" };
+    }
     const allowed = canonicalRoots.some((root) => {
       const pathFromRoot = relative(root, canonical);
       return (

@@ -5,7 +5,7 @@ import {
   DatabaseIcon,
   FilesIcon,
   GlobeIcon,
-  LayoutDashboardIcon,
+  InfoIcon,
   NetworkIcon,
   PaletteIcon,
   SettingsIcon,
@@ -22,7 +22,7 @@ export type PanelIconComponent = React.ComponentType<
  * rail always renders a glyph without inventing an emoji or text abbreviation.
  */
 const ICON_MAP: Record<string, PanelIconComponent> = {
-  overview: LayoutDashboardIcon,
+  overview: InfoIcon,
   components: BoxIcon,
   pages: FilesIcon,
   graph: NetworkIcon,

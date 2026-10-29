@@ -8,6 +8,7 @@ import {
 } from "@next-devtools/core";
 import type { CoreRuntimeServices } from "@next-devtools/core";
 import { RUNTIME_SERVICE_IDS } from "@next-devtools/contracts";
+import { openInEditorAction } from "@next-devtools/host-next/open-in-editor-action";
 import { scanAppRouter } from "@next-devtools/host-next/route-scanner";
 import { createRouteRuntimeService } from "@next-devtools/host-next/route-runtime";
 import type { DevtoolsPlugin } from "@next-devtools/plugin-sdk";
@@ -18,8 +19,10 @@ import {
   reactCapabilityDescriptors,
   type ReactRuntimeService,
 } from "@next-devtools/runtime-react";
-import { DevtoolsShell } from "./shell.js";
-import { devtoolsCssText } from "./devtools-css.generated.js";
+import { DevtoolsShell } from "./shell/shell.js";
+import { devtoolsCssText } from "./css/devtools-css.generated.js";
+import { ElementPicker } from "./components/element-picker.js";
+import type { ResolvedElementSource } from "@next-devtools/source-inspector";
 
 export interface DevtoolsProviderProps {
   plugins?: DevtoolsPlugin[];
@@ -122,6 +125,34 @@ export function DevtoolsProvider({
     });
   }
   const [container, setContainer] = React.useState<HTMLDivElement | null>(null);
+  const [globalPicking, setGlobalPicking] = React.useState(false);
+
+  React.useEffect(() => {
+    const requestPick = () => setGlobalPicking(true);
+    window.addEventListener("next-devtools:pick-element", requestPick);
+    return () =>
+      window.removeEventListener("next-devtools:pick-element", requestPick);
+  }, []);
+
+  const handleGlobalPick = React.useCallback(
+    async (_element: HTMLElement, source: ResolvedElementSource | null) => {
+      setGlobalPicking(false);
+      if (!source?.filePath || !source.lineNumber) return;
+      const result = await openInEditorAction({
+        path: source.filePath,
+        line: source.lineNumber,
+        column: source.columnNumber ?? 1,
+        editor: "vscode",
+      });
+      if (!result.ok) {
+        console.warn(
+          "[next-devtools] failed to open source in VS Code",
+          result.reason,
+        );
+      }
+    },
+    [],
+  );
 
   // Connect the React runtime bridge and publish capabilities.
   React.useEffect(() => {
@@ -372,7 +403,14 @@ export function DevtoolsProvider({
       {app}
       {container
         ? createPortal(
-            <DevtoolsShell registry={registryRef.current!} enabled />,
+            <>
+              <DevtoolsShell registry={registryRef.current!} enabled />
+              <ElementPicker
+                active={globalPicking}
+                onPick={handleGlobalPick}
+                onCancel={() => setGlobalPicking(false)}
+              />
+            </>,
             container,
           )
         : null}

@@ -2,6 +2,6 @@
 
 export { openInEditorAction } from "@next-devtools/host-next";
 export type {
-  OpenInEditorActionInput,
-  OpenInEditorActionResult,
+	OpenInEditorActionInput,
+	OpenInEditorActionResult,
 } from "@next-devtools/host-next";

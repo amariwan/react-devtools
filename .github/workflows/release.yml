@@ -17,7 +17,7 @@ jobs:
   release:
     if: github.repository == 'amariwan/react-devtools' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,12 +26,11 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.4
+          cache: true
       - run: bun install --frozen-lockfile
+      # Verify already ran all quality gates. Only build here (needed for publish artifact).
+      - run: bun run --filter '*' build
       - run: bun run validate:release
-      - run: bun run build
-      - run: bun run typecheck
-      - run: bun run test:unit
-      - run: bun run test:compatibility
       - uses: changesets/action@v1
         with:
           version: bun run version-packages

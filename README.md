@@ -174,8 +174,8 @@ Open [http://localhost:3000](http://localhost:3000) unless the development serve
 ```bash
 bun run build                # Build workspace packages
 bun run typecheck            # Type-check packages
-bun run lint                 # ESLint
-bun run format:check         # Prettier
+bun run lint                 # Biome (lint + organize)
+bun run format:check         # Biome (format)
 bun run test:unit            # Unit and contract tests
 bun run test:e2e             # Chromium
 bun run test:e2e:webkit      # WebKit

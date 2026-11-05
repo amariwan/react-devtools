@@ -1,19 +1,19 @@
-import * as React from "react";
 import {
-  BotIcon,
-  BoxIcon,
-  DatabaseIcon,
-  FilesIcon,
-  GlobeIcon,
-  InfoIcon,
-  NetworkIcon,
-  PaletteIcon,
-  SettingsIcon,
-  SparklesIcon,
+	BotIcon,
+	BoxIcon,
+	DatabaseIcon,
+	FilesIcon,
+	GlobeIcon,
+	InfoIcon,
+	NetworkIcon,
+	PaletteIcon,
+	SettingsIcon,
+	SparklesIcon,
 } from "lucide-react";
+import type * as React from "react";
 
 export type PanelIconComponent = React.ComponentType<
-  React.SVGProps<SVGSVGElement>
+	React.SVGProps<SVGSVGElement>
 >;
 
 /**
@@ -22,26 +22,26 @@ export type PanelIconComponent = React.ComponentType<
  * rail always renders a glyph without inventing an emoji or text abbreviation.
  */
 const ICON_MAP: Record<string, PanelIconComponent> = {
-  overview: InfoIcon,
-  components: BoxIcon,
-  pages: FilesIcon,
-  graph: NetworkIcon,
-  css: PaletteIcon,
-  network: GlobeIcon,
-  store: DatabaseIcon,
-  agent: BotIcon,
-  sparkles: SparklesIcon,
-  settings: SettingsIcon,
+	overview: InfoIcon,
+	components: BoxIcon,
+	pages: FilesIcon,
+	graph: NetworkIcon,
+	css: PaletteIcon,
+	network: GlobeIcon,
+	store: DatabaseIcon,
+	agent: BotIcon,
+	sparkles: SparklesIcon,
+	settings: SettingsIcon,
 };
 
 export function resolveIcon(
-  name: string | null | undefined,
+	name: string | null | undefined,
 ): PanelIconComponent {
-  if (name) {
-    const icon = ICON_MAP[name];
-    if (icon) return icon;
-  }
-  return BoxIcon;
+	if (name) {
+		const icon = ICON_MAP[name];
+		if (icon) return icon;
+	}
+	return BoxIcon;
 }
 
 export { ICON_MAP };

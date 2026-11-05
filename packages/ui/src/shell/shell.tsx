@@ -226,6 +226,11 @@ export function DevtoolsShell({
   React.useEffect(() => {
     const navigate = (event: Event) => {
       const id: unknown = (event as CustomEvent).detail;
+      if (id === "settings") {
+        setSettingsOpen(true);
+        setOpen(true);
+        return;
+      }
       if (typeof id !== "string" || !panels.some((panel) => panel.id === id))
         return;
       setPrefs((value) => ({

@@ -13,70 +13,87 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
+  # ── Quality gates that need no build output ──
+  quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 10
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.4
+          cache: true
+      - run: bun install --frozen-lockfile
+      - run: bun run format:check
+      - run: bun run lint
+      - run: bun run validate:metadata
+      - run: bun run validate:test-architecture
+      - run: bun run validate:security
 
-      - name: "Stage 1 — Install dependencies"
-        run: bun install --frozen-lockfile
+  # ── Build, typecheck, package validation, perf ──
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+          cache: true
+      - run: bun install --frozen-lockfile
+      - run: bun run --filter '*' build
+      - run: bun run --filter '*' typecheck
+      - run: bun run validate:packages
+      - run: bun run validate:release
+      - run: bun run perf:baseline
 
-      - name: "Stage 1 — Validate formatting"
-        run: bun run format:check
+  # ── Unit / contract / compatibility tests ──
+  unit-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+          cache: true
+      - run: bun install --frozen-lockfile
+      - run: bun run --filter '*' build
+      - run: bun run test:unit
+      - run: bun run test:compatibility
+      - run: bunx vitest run tests/compatibility/open-in-editor.spec.ts tests/compatibility/open-in-editor-executable.spec.ts
 
-      - name: "Stage 1 — Validate repository metadata"
-        run: bun run validate:metadata
+  # ── E2E browser tests ──
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+          cache: true
+      - run: bun install --frozen-lockfile
+      - run: bun run --filter '*' build
+      - run: bunx playwright install --with-deps chromium webkit
+      - run: bun run test:e2e
+      - run: bun run test:e2e:webkit
+      - run: bun run test:e2e:production
 
-      - name: "Stage 3 — Build all packages and examples"
-        run: bun run --filter '*' build
-
-      - name: "Stage 1 — Typecheck all packages"
-        run: bun run --filter '*' typecheck
-
-      - name: "Stage 1 — Lint"
-        run: bun run lint
-
-      - name: "Stage 2 — Run unit and contract tests"
-        run: bun run test:unit
-
-      - name: "Stage 2 — Run compatibility and security regression tests"
-        run: bun run test:compatibility
-
-      - name: "Stage 6 — Verify package archives and isolated consumer install"
-        run: bun run validate:packages
-
-      - name: "Stage 6 — Verify release graph and release metadata"
-        run: bun run validate:release
-
-      - name: "Stage 5 — Dependency vulnerability scan"
-        run: bun audit
-
-      - name: "Stage 5 — Secret pattern scan"
-        run: bun run validate:security
-
-      - name: "Stage 5 — Verify production package boundaries"
-        run: bunx vitest run tests/compatibility/open-in-editor.test.ts tests/compatibility/open-in-editor-executable.test.ts
-
-      - name: "Stage 2 — Verify bounded performance baseline"
-        run: bun run perf:baseline
-
-      - name: "Stage 4 — Install Playwright Chromium and WebKit"
-        run: bunx playwright install --with-deps chromium webkit
-
-      - name: "Stage 4 — Run Chromium browser tests"
-        run: bun run test:e2e
-
-      - name: "Stage 4 — Run WebKit browser tests"
-        run: bun run test:e2e:webkit
-
-      - name: "Stage 4 — Run production browser smoke test"
-        run: bun run test:e2e:production
+  # ── Dependency vulnerability scan ──
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+          cache: true
+      - run: bun install --frozen-lockfile
+      - run: bun audit

@@ -26,6 +26,7 @@ export * from "./components/ui/command.js";
 export * from "./components/ui/dialog.js";
 export * from "./components/ui/dropdown-menu.js";
 export * from "./components/ui/field.js";
+export * from "./components/ui/gooey-input.js";
 export * from "./components/ui/hover-card.js";
 export * from "./components/ui/input.js";
 export * from "./components/ui/label.js";

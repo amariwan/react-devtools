@@ -4,7 +4,32 @@ This is an evidence ledger, not a promise that an npm or GitHub release has
 occurred. A check is `PASS` only when the command has actually completed
 successfully in the stated environment.
 
-## Current local evidence — 2026-10-28
+## Current local evidence — 2026-11-05
+
+| Gate                       | Command / workflow                      | Status  | Evidence                                                            |
+| -------------------------- | --------------------------------------- | ------- | ------------------------------------------------------------------- |
+| Formatting                 | `bun run format:check`                  | PASS    | Biome, 526 files matched                                            |
+| Lint                       | `bun run lint`                          | PASS    | Biome `check .`, 0 errors across 526 files                          |
+| Build                      | `bun run build`                         | PASS    | All packages and showcase built                                     |
+| Typecheck                  | `bun run typecheck`                     | PASS    | All workspace packages exited 0                                     |
+| Unit/contract              | `bun run test:unit`                     | PASS    | 223 files, 535 tests                                                |
+| Compatibility/consumer     | `bun run test:compatibility`            | PASS    | 3 files, 18 tests                                                   |
+| Performance                | `bun run perf:baseline`                 | PASS    | Fiber tree 1.71 ms median; bounded retention 4000/5000/200          |
+| Dependency vulnerabilities | `bun audit`                             | PASS    | 410 packages, no vulnerabilities                                    |
+| Secret pattern scan        | `bun run validate:security`             | PASS    | 557 source/config files checked                                     |
+| Metadata                   | `bun run validate:metadata`             | PASS    | 21 workspace packages validated                                     |
+| Package archives           | `bun run validate:packages`             | PASS    | 17 public packages archived and validated                           |
+| Changesets                 | `bunx changeset status`                 | PENDING | Uncommitted work requires a version bump (6 plugins flagged)        |
+| Chromium E2E               | `bun run test:e2e`                      | NOT RUN | Browser gate not executed this pass                                 |
+| WebKit E2E                 | `bun run test:e2e:webkit`              | NOT RUN | Browser gate not executed this pass                                 |
+| Production smoke           | `bun run test:e2e:production`           | NOT RUN | Browser gate not executed this pass                                 |
+| GitHub CI                  | `.github/workflows/verify.yml`          | NOT RUN | No remote CI run observed locally                                   |
+| Branch protection          | `docs/maintainers/branch-protection.md` | BLOCKED | GitHub settings require repository-admin access                     |
+| Remote tracking            | `git branch -vv`                        | BLOCKED | No configured remote; supplied repository URL currently returns 404 |
+
+The snapshot below is the prior 2026-10-28 evidence ledger (pre-Biome tooling).
+
+## Prior local evidence — 2026-10-28
 
 | Gate                       | Command / workflow                      | Status  | Evidence                                                            |
 | -------------------------- | --------------------------------------- | ------- | ------------------------------------------------------------------- |

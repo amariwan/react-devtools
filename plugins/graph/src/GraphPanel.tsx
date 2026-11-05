@@ -1,433 +1,287 @@
-import * as React from "react";
-import type { PluginRegistry } from "@next-devtools/core";
 import { RUNTIME_SERVICE_IDS } from "@next-devtools/contracts";
+import type { PluginRegistry } from "@next-devtools/core";
 import type { ReactRuntimeService } from "@next-devtools/runtime-react";
+import { Badge, PanelHeader } from "@next-devtools/ui";
+import * as React from "react";
+import { GraphCanvas } from "./components/GraphCanvas.js";
+import { GraphFilters } from "./components/GraphFilters.js";
+import { GraphLayoutSettings } from "./components/GraphLayoutSettings.js";
+import { GraphLegend } from "./components/GraphLegend.js";
+import { GraphNodeInspector } from "./components/GraphNodeInspector.js";
+import { GraphStates } from "./components/GraphStates.js";
+import { GraphToolbar } from "./components/GraphToolbar.js";
+import { useCytoscape } from "./hooks/useCytoscape.js";
+import { useGraphData } from "./hooks/useGraphData.js";
+import { useGraphTheme } from "./hooks/useGraphTheme.js";
 import {
-  Badge,
-  Button,
-  EmptyState,
-  PanelHeader,
-  SearchField,
-  Toolbar,
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@next-devtools/ui";
-import { buildGraphData } from "./graph-data.js";
-import cytoscape from "cytoscape";
-import fcose from "cytoscape-fcose";
-import coseBilkent from "cytoscape-cose-bilkent";
-
-let extensionsRegistered = false;
-function registerExtensions(): void {
-  if (extensionsRegistered) return;
-  try {
-    cytoscape.use(fcose);
-  } catch {
-    /* ignore duplicate registration */
-  }
-  try {
-    cytoscape.use(coseBilkent);
-  } catch {
-    /* ignore duplicate registration */
-  }
-  extensionsRegistered = true;
-}
-
-type LayoutName =
-  | "fcose"
-  | "cose"
-  | "cose-bilkent"
-  | "grid"
-  | "circle"
-  | "concentric"
-  | "breadthfirst";
-
-const LAYOUT_OPTIONS: readonly { value: LayoutName; label: string }[] = [
-  { value: "fcose", label: "fcose (force-directed)" },
-  { value: "cose", label: "cose (force-directed)" },
-  { value: "cose-bilkent", label: "cose-bilkent (force-directed)" },
-  { value: "grid", label: "grid (discrete)" },
-  { value: "circle", label: "circle (discrete)" },
-  { value: "concentric", label: "concentric (discrete)" },
-  { value: "breadthfirst", label: "breadthfirst (hierarchical)" },
-];
-
-function layoutOptionsFor(name: LayoutName, animate: boolean): cytoscape.LayoutOptions {
-  const base = {
-    animate,
-    animationDuration: 450,
-    fit: true,
-    padding: 30,
-  } as const;
-  switch (name) {
-    case "fcose":
-      return { name: "fcose", ...base, quality: "default" } as cytoscape.LayoutOptions;
-    case "cose":
-      return { name: "cose", ...base } as cytoscape.LayoutOptions;
-    case "cose-bilkent":
-      return { name: "cose-bilkent", ...base } as cytoscape.LayoutOptions;
-    case "circle":
-      return { name: "circle", ...base } as cytoscape.LayoutOptions;
-    case "concentric":
-      return {
-        name: "concentric",
-        ...base,
-        concentric: (node: cytoscape.NodeSingular) =>
-          (node.data("hasState") ? 2 : 1) as number,
-        levelWidth: () => 1,
-      } as cytoscape.LayoutOptions;
-    case "breadthfirst":
-      return {
-        name: "breadthfirst",
-        ...base,
-        directed: true,
-      } as cytoscape.LayoutOptions;
-    case "grid":
-    default:
-      return { name: "grid", ...base } as cytoscape.LayoutOptions;
-  }
-}
+	DEFAULT_FCOSE_SETTINGS,
+	type FcoseSettings,
+	type GraphLayoutName,
+	clampFcoseSettings,
+} from "./lib/graph-layout.js";
+import {
+	DEFAULT_GRAPH_DEPTH,
+	DEFAULT_GRAPH_NODE_LIMIT,
+	createDefaultEdgeFilters,
+	createDefaultNodeFilters,
+} from "./lib/graph-model.js";
+import { buildGraphStylesheet } from "./lib/graph-styles.js";
 
 export default function GraphPanel({ registry }: { registry: PluginRegistry }) {
-  const service = registry.services.get<ReactRuntimeService>(
-    RUNTIME_SERVICE_IDS.react,
-  );
-  const subscribe = React.useMemo(
-    () =>
-      (listener: () => void): (() => void) =>
-        service?.subscribe(listener) ?? (() => undefined),
-    [service],
-  );
-  const getSnapshot = React.useMemo(
-    () => () => service?.getSnapshot() ?? null,
-    [service],
-  );
-  const snapshot = React.useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getSnapshot,
-  );
+	const service = registry.services.get<ReactRuntimeService>(
+		RUNTIME_SERVICE_IDS.react,
+	);
 
-  const data = React.useMemo(() => buildGraphData(snapshot), [snapshot]);
+	const [query, setQuery] = React.useState("");
+	const [layoutName, setLayoutName] = React.useState<GraphLayoutName>("fcose");
+	const [animate, setAnimate] = React.useState(true);
+	const [showEdgeLabels, setShowEdgeLabels] = React.useState(false);
+	const [depth, setDepth] = React.useState(DEFAULT_GRAPH_DEPTH);
+	const [nodeLimit] = React.useState(DEFAULT_GRAPH_NODE_LIMIT);
+	const [nodeKinds, setNodeKinds] = React.useState(createDefaultNodeFilters());
+	const [edgeKinds, setEdgeKinds] = React.useState(createDefaultEdgeFilters());
+	const [fcoseSettings, setFcoseSettings] = React.useState<FcoseSettings>(
+		DEFAULT_FCOSE_SETTINGS,
+	);
+	const [settingsOpen, setSettingsOpen] = React.useState(false);
+	const [fullscreen, setFullscreen] = React.useState(false);
+	const [layoutNonce, setLayoutNonce] = React.useState(0);
+	const [selectedNodeId, setSelectedNodeId] = React.useState<string | null>(
+		null,
+	);
 
-  const [query, setQuery] = React.useState("");
-  const [layoutName, setLayoutName] = React.useState<LayoutName>("fcose");
-  const [animate, setAnimate] = React.useState(true);
-  const [view, setView] = React.useState<"graph" | "table">("graph");
-  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+	const graphData = useGraphData({
+		service,
+		depth,
+		nodeLimit,
+		nodeKinds,
+		edgeKinds,
+		query,
+		...(selectedNodeId ? { selectedNodeId } : {}),
+	});
 
-  React.useEffect(() => {
-    if (selectedId && !data.nodes.some((n) => n.id === selectedId)) {
-      setSelectedId(null);
-    }
-  }, [data, selectedId]);
+	// Clear stale selection when root changes or node disappears.
+	React.useEffect(() => {
+		setSelectedNodeId(null);
+	}, [graphData.rootComponentId]);
+	React.useEffect(() => {
+		if (!selectedNodeId) return;
+		if (graphData.view.nodes.some((node) => node.id === selectedNodeId)) return;
+		setSelectedNodeId(null);
+	}, [graphData.view.nodes, selectedNodeId]);
 
-  const visibleNodes = data.nodes.filter((node) =>
-    `${node.displayName} ${node.kind}`
-      .toLowerCase()
-      .includes(query.trim().toLowerCase()),
-  );
-  const names = new Map(data.nodes.map((node) => [node.id, node.displayName]));
+	const themeContainerRef = React.useRef<HTMLDivElement | null>(null);
+	const theme = useGraphTheme(themeContainerRef);
 
-  const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const cyRef = React.useRef<cytoscape.Core | null>(null);
+	const stylesheet = React.useMemo(() => buildGraphStylesheet(theme), [theme]);
 
-  // create / destroy cytoscape instance
-  React.useEffect(() => {
-    registerExtensions();
-    if (!containerRef.current) return;
-    const cy = cytoscape({
-      container: containerRef.current,
-      elements: [],
-      style: [
-        {
-          selector: "node",
-          style: {
-            label: "data(label)",
-            "font-size": 10,
-            "text-valign": "center",
-            "text-halign": "center",
-            color: "#18181b",
-            width: 28,
-            height: 28,
-            "background-color": "#e4e4e7",
-            "border-width": 1,
-            "border-color": "#a1a1aa",
-          },
-        },
-        {
-          selector: "node[hasState]",
-          style: {
-            "background-color": "#dbeafe",
-            "border-color": "#3b82f6",
-          },
-        },
-        {
-          selector: "node.selected",
-          style: {
-            "border-width": 3,
-            "border-color": "#2563eb",
-            "background-color": "#bfdbfe",
-          },
-        },
-        {
-          selector: "node.dimmed",
-          style: { opacity: 0.25 },
-        },
-        {
-          selector: "edge",
-          style: {
-            width: 1,
-            "line-color": "#a1a1aa",
-            "target-arrow-color": "#a1a1aa",
-            "target-arrow-shape": "triangle",
-            "curve-style": "bezier",
-            opacity: 0.7,
-          },
-        },
-        {
-          selector: "edge.dimmed",
-          style: { opacity: 0.1 },
-        },
-      ],
-      layout: { name: "grid" },
-      userZoomingEnabled: true,
-      userPanningEnabled: true,
-      boxSelectionEnabled: false,
-    });
-    cyRef.current = cy;
+	const controller = useCytoscape({
+		nodes: graphData.view.nodes,
+		edges: graphData.view.edges,
+		stylesheet,
+		layoutName,
+		fcoseSettings,
+		animate,
+		showEdgeLabels,
+		...(graphData.rootComponentId ? { rootId: graphData.rootComponentId } : {}),
+		...(selectedNodeId ? { selectedNodeId } : {}),
+		layoutNonce,
+		onNodeSelect: (id) => setSelectedNodeId(id),
+		onBackgroundSelect: () => setSelectedNodeId(null),
+	});
 
-    cy.on("tap", "node", (evt) => {
-      const id = evt.target.id() as string;
-      setSelectedId(id);
-    });
-    cy.on("tap", (evt) => {
-      if (evt.target === cy) setSelectedId(null);
-    });
+	const containerRef = controller.containerRef;
 
-    return () => {
-      cy.destroy();
-      cyRef.current = null;
-    };
-  }, []);
+	React.useEffect(() => {
+		themeContainerRef.current = containerRef.current;
+	}, [containerRef.current]);
 
-  // sync elements + visibility + selection, then run layout
-  React.useEffect(() => {
-    const cy = cyRef.current;
-    if (!cy) return;
-    const visibleSet = new Set(visibleNodes.map((n) => n.id));
+	const focusComponent = React.useCallback(() => {
+		if (graphData.rootComponentId) {
+			controller.zoomTo(graphData.rootComponentId);
+		}
+	}, [controller, graphData.rootComponentId]);
 
-    cy.batch(() => {
-      cy.elements().remove();
-      const elems: cytoscape.ElementDefinition[] = [
-        ...data.nodes.map((n) => ({
-          data: {
-            id: n.id,
-            label: n.displayName,
-            kind: n.kind,
-            hasState: n.hasState,
-          },
-        })),
-        ...data.edges.map((e, i) => ({
-          data: {
-            id: `e${i}`,
-            source: e.from,
-            target: e.to,
-          },
-        })),
-      ];
-      cy.add(elems);
+	const exportGraph = React.useCallback(() => {
+		if (typeof document === "undefined") return;
+		const payload = {
+			root: graphData.rootComponentId,
+			nodes: graphData.view.nodes,
+			edges: graphData.view.edges,
+			limitations: graphData.view.limitations,
+		};
+		const blob = new Blob([JSON.stringify(payload, null, 2)], {
+			type: "application/json",
+		});
+		const url = URL.createObjectURL(blob);
+		const anchor = document.createElement("a");
+		anchor.href = url;
+		anchor.download = "next-devtools-reactive-dependencies.json";
+		anchor.click();
+		URL.revokeObjectURL(url);
+	}, [graphData]);
 
-      // visibility based on search
-      cy.nodes().forEach((n) => {
-        if (!visibleSet.has(n.id())) n.style("display", "none");
-        else n.style("display", "element");
-      });
-      // selection highlight
-      cy.nodes().removeClass("selected dimmed");
-      cy.edges().removeClass("dimmed");
-      if (selectedId) {
-        const sel = cy.getElementById(selectedId);
-        const neighborhood = sel.closedNeighborhood();
-        const others = cy.elements().not(neighborhood);
-        others.addClass("dimmed");
-        sel.addClass("selected");
-      }
-    });
+	const resetFilters = React.useCallback(() => {
+		setNodeKinds(createDefaultNodeFilters());
+		setEdgeKinds(createDefaultEdgeFilters());
+		setQuery("");
+	}, []);
 
-    const selectedNode = selectedId ? cy.getElementById(selectedId) : null;
-    const toLayout =
-      selectedId && selectedNode && selectedNode.length > 0
-        ? selectedNode.closedNeighborhood()
-        : cy.elements();
-    // run layout (interactive: concentric on neighbourhood when selected)
-    let opts: cytoscape.LayoutOptions;
-    if (selectedId && selectedNode && selectedNode.length > 0) {
-      opts = {
-        name: "concentric",
-        animate,
-        animationDuration: 450,
-        fit: false,
-        padding: 20,
-        concentric: (node: cytoscape.NodeSingular) => {
-          if (node.id() === selectedId) return 3;
-          const sel = cy.getElementById(selectedId as string);
-          if (sel.closedNeighborhood().contains(node)) return 2;
-          return 1;
-        },
-        levelWidth: () => 1,
-      } as cytoscape.LayoutOptions;
-    } else {
-      opts = layoutOptionsFor(layoutName, animate);
-    }
-    const layout = toLayout.layout(opts);
-    layout.run();
+	const rootLabel = graphData.view.rootLabel;
+	const nodeCount = graphData.view.nodeCount;
 
-    if (!selectedId) {
-      const visibleNodesCy = cy.nodes().filter((n) => n.style("display") !== "none");
-      if (visibleNodesCy.length > 0) cy.fit(visibleNodesCy, 30);
-    }
-  }, [data, visibleNodes, layoutName, animate, selectedId]);
+	React.useEffect(() => {
+		if (fullscreen && typeof document !== "undefined") {
+			const previous = document.body.style.overflow;
+			document.body.style.overflow = "hidden";
+			return () => {
+				document.body.style.overflow = previous;
+			};
+		}
+		return undefined;
+	}, [fullscreen]);
 
-  if (data.nodes.length === 0) {
-    return (
-      <div className="devtools:flex devtools:min-h-0 devtools:flex-col">
-        <PanelHeader
-          title="Component graph"
-          description="Reactive dependencies of the selected component."
-          actions={
-            <Badge variant="secondary">
-              {data.nodeCount} nodes · {data.edgeCount} edges
-            </Badge>
-          }
-        />
-        <EmptyState
-          title="No graph data"
-          description={
-            data.reason ??
-            "Connect the React bridge to inspect component relationships."
-          }
-        />
-      </div>
-    );
-  }
+	const wrapperStyle: React.CSSProperties = fullscreen
+		? {
+				position: "fixed",
+				inset: 0,
+				zIndex: 9999,
+				background: "var(--background, #0e0e10)",
+				display: "flex",
+				flexDirection: "column",
+			}
+		: {
+				display: "flex",
+				flexDirection: "column",
+				height: "100%",
+				minHeight: 0,
+			};
 
-  return (
-    <div className="devtools:flex devtools:min-h-0 devtools:flex-col">
-      <PanelHeader
-        title="Component graph"
-        description="Reactive dependencies of the selected component."
-        actions={
-          <Badge variant="secondary">
-            {data.nodeCount} nodes · {data.edgeCount} edges
-          </Badge>
-        }
-      />
-      <Toolbar>
-        <SearchField
-          aria-label="Search graph nodes"
-          placeholder="Search name or kind…"
-          value={query}
-          onChange={setQuery}
-        />
-        <div className="devtools:flex devtools:items-center devtools:gap-2">
-          <label className="devtools:text-xs devtools:text-muted-foreground">
-            Layout
-            <select
-              className="devtools:ml-1 devtools:rounded devtools:border devtools:border-border devtools:bg-background devtools:px-1 devtools:py-0.5 devtools:text-xs"
-              value={layoutName}
-              onChange={(e) => setLayoutName(e.target.value as LayoutName)}
-            >
-              {LAYOUT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="devtools:flex devtools:items-center devtools:gap-1 devtools:text-xs devtools:text-muted-foreground">
-            <input
-              type="checkbox"
-              checked={animate}
-              onChange={(e) => setAnimate(e.target.checked)}
-            />
-            Animate
-          </label>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setView(view === "graph" ? "table" : "graph")}
-          >
-            {view === "graph" ? "Table view" : "Graph view"}
-          </Button>
-          {selectedId ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedId(null)}
-            >
-              Clear selection
-            </Button>
-          ) : null}
-        </div>
-      </Toolbar>
-      {view === "graph" ? (
-        <div
-          ref={containerRef}
-          className="devtools:min-h-[320px] devtools:flex-1 devtools:rounded-md devtools:border devtools:border-border"
-          style={{ height: 360, position: "relative" }}
-        />
-      ) : visibleNodes.length === 0 ? (
-        <EmptyState
-          title="No matching nodes"
-          description="Try another component name or kind."
-          action={
-            <Button variant="outline" onClick={() => setQuery("")}>
-              Clear search
-            </Button>
-          }
-        />
-      ) : (
-        <div className="devtools:overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Component</TableHead>
-                <TableHead>Kind</TableHead>
-                <TableHead>Parent</TableHead>
-                <TableHead>State</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {visibleNodes.map((node) => {
-                const parent = data.edges.find((edge) => edge.to === node.id);
-                return (
-                  <TableRow key={node.id}>
-                    <TableCell className="devtools:font-mono devtools:text-xs">
-                      {node.displayName}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{node.kind}</Badge>
-                    </TableCell>
-                    <TableCell className="devtools:text-xs devtools:text-muted-foreground">
-                      {parent
-                        ? (names.get(parent.from) ?? parent.from)
-                        : "Root"}
-                    </TableCell>
-                    <TableCell className="devtools:text-xs">
-                      {node.hasState ? "Stateful" : "—"}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-    </div>
-  );
+	return (
+		<div ref={themeContainerRef} style={wrapperStyle}>
+			<PanelHeader
+				title="Graph"
+				description="Reactive dependencies of the selected component. Component hierarchy is never shown."
+				actions={
+					<Badge variant="secondary">
+						{rootLabel ? rootLabel : "No selection"} · {nodeCount} nodes
+					</Badge>
+				}
+			/>
+			<GraphToolbar
+				query={query}
+				onQueryChange={setQuery}
+				layoutName={layoutName}
+				onLayoutChange={setLayoutName}
+				depth={depth}
+				onDepthChange={setDepth}
+				animate={animate}
+				onAnimateChange={setAnimate}
+				showEdgeLabels={showEdgeLabels}
+				onShowEdgeLabelsChange={setShowEdgeLabels}
+				onFit={controller.fit}
+				onReset={controller.resetView}
+				onRunLayout={() => setLayoutNonce((value) => value + 1)}
+				onFocus={focusComponent}
+				onExport={exportGraph}
+				onToggleFullscreen={() => setFullscreen((value) => !value)}
+				fullscreen={fullscreen}
+				onOpenSettings={() => setSettingsOpen(true)}
+				loading={graphData.loading}
+				nodeCount={nodeCount}
+			/>
+			<GraphFilters
+				nodeKinds={nodeKinds}
+				onNodeKindsChange={setNodeKinds}
+				edgeKinds={edgeKinds}
+				onEdgeKindsChange={setEdgeKinds}
+			/>
+			{graphData.view.nodeLimitReached ? (
+				<div
+					style={{
+						padding: "4px 10px",
+						fontSize: 11,
+						color: "var(--warning, #d97706)",
+						borderBottom: "1px solid var(--border, rgba(127,127,127,0.25))",
+					}}
+				>
+					Node limit reached ({nodeLimit}). Lower-priority nodes are hidden.
+				</div>
+			) : null}
+			<div
+				style={{
+					display: "grid",
+					gridTemplateColumns: fullscreen ? "1fr 320px" : "1fr 280px",
+					gap: 0,
+					flex: 1,
+					minHeight: 0,
+					overflow: "hidden",
+				}}
+			>
+				<div
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						minHeight: 0,
+						overflow: "hidden",
+					}}
+				>
+					<GraphCanvas
+						controller={controller}
+						theme={theme}
+						view={graphData.view}
+						containerRef={containerRef}
+						onNodeSelect={(id) => setSelectedNodeId(id)}
+						onBackgroundSelect={() => setSelectedNodeId(null)}
+						height={
+							fullscreen
+								? Math.max(
+										320,
+										(typeof window !== "undefined" ? window.innerHeight : 600) -
+											140,
+									)
+								: 420
+						}
+					/>
+					<GraphStates
+						view={graphData.view}
+						runtimeStatus={graphData.runtimeStatus}
+						dependenciesCapable={graphData.dependenciesCapable}
+						dependencySetLoaded={graphData.loaded}
+						loading={graphData.loading}
+						{...(graphData.dependencyError
+							? { dependencyError: graphData.dependencyError }
+							: {})}
+						onReload={graphData.reload}
+						onResetFilters={resetFilters}
+						hiddenByKind={graphData.view.hiddenByKind}
+					/>
+					<GraphLegend theme={theme} visibleKinds={nodeKinds} />
+				</div>
+				<div
+					style={{
+						borderLeft: "1px solid var(--border, rgba(127,127,127,0.25))",
+						overflow: "auto",
+						minHeight: 0,
+					}}
+				>
+					<GraphNodeInspector
+						view={graphData.view}
+						selectedNodeId={selectedNodeId}
+						onSelectNode={(id) => setSelectedNodeId(id)}
+					/>
+				</div>
+			</div>
+			<GraphLayoutSettings
+				open={settingsOpen}
+				onClose={() => setSettingsOpen(false)}
+				settings={fcoseSettings}
+				onSettingsChange={(value) => {
+					setFcoseSettings(clampFcoseSettings(value));
+					setLayoutNonce((n) => n + 1);
+				}}
+				nodeCount={nodeCount}
+			/>
+		</div>
+	);
 }

@@ -1,0 +1,35 @@
+{
+	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+	"files": {
+		"ignore": [
+			"**/node_modules/**",
+			"**/.next/**",
+			"**/dist/**",
+			"**/graphify-out/**",
+			"**/test-results/**",
+			"**/coverage/**",
+			"**/devtools-css.generated.ts",
+			"**/devtools.css",
+			"**/shell.tsx",
+			".gitnexus/**",
+			".git/**"
+		]
+	},
+	"linter": {
+		"rules": {
+			"style": {
+				"noNonNullAssertion": "off"
+			},
+			"correctness": {
+				"useExhaustiveDependencies": "off"
+			},
+			"a11y": {
+				"noLabelWithoutControl": "off",
+				"noSvgWithoutTitle": "off",
+				"useSemanticElements": "off",
+				"useFocusableInteractive": "off",
+				"useKeyWithClickEvents": "off"
+			}
+		}
+	}
+}

@@ -5,6 +5,7 @@
 
 export type ThemePref = "light" | "dark" | "system";
 export type DockPosition = "bottom" | "right" | "left";
+export const DEFAULT_DOCK_SIZE = 70;
 
 export interface ShellPrefs {
 	theme: ThemePref;

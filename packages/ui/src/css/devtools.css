@@ -357,6 +357,28 @@
 .devtools-dock {
   container: devtools / inline-size;
 }
+/* Entrance motion is isolated from width/height so dragging stays immediate. */
+.devtools-dock[data-dock="bottom"] {
+  animation: devtools-dock-enter-bottom 180ms ease-out both;
+}
+.devtools-dock[data-dock="left"] {
+  animation: devtools-dock-enter-left 180ms ease-out both;
+}
+.devtools-dock[data-dock="right"] {
+  animation: devtools-dock-enter-right 180ms ease-out both;
+}
+@keyframes devtools-dock-enter-bottom {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes devtools-dock-enter-left {
+  from { opacity: 0; transform: translateX(-12px) scale(0.98); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes devtools-dock-enter-right {
+  from { opacity: 0; transform: translateX(12px) scale(0.98); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
 .devtools-panel {
   padding: 16px;
   min-width: 0;

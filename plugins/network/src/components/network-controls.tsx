@@ -1,4 +1,13 @@
-import { Button, SearchField, Select, Toolbar } from "@next-devtools/ui";
+import {
+	Download,
+	IconButton,
+	Play,
+	SearchField,
+	Select,
+	Square,
+	Toolbar,
+	Trash2,
+} from "@next-devtools/ui";
 import type { NetworkData } from "../network-data.js";
 
 type NetworkControlsProps = {
@@ -33,39 +42,56 @@ export function NetworkControls({
 	onInitiatorChange,
 }: NetworkControlsProps) {
 	return (
-		<Toolbar className="devtools:flex-wrap devtools:gap-2">
-			<Button
-				variant={recording ? "outline" : "default"}
-				disabled={!available || status === "unavailable" || status === "error"}
-				onClick={onToggleRecording}
+		<Toolbar className="devtools:flex-col devtools:flex-nowrap devtools:items-stretch devtools:gap-1.5">
+			<div
+				role="group"
+				aria-label="Network capture actions"
+				className="devtools:flex devtools:items-center devtools:gap-1"
 			>
-				{recording ? "Stop recording" : "Start recording"}
-			</Button>
-			<Button variant="ghost" onClick={onClear} disabled={entryCount === 0}>
-				Clear
-			</Button>
-			<Button
-				variant="outline"
-				onClick={onExport}
-				disabled={!hasVisibleEntries}
-			>
-				Export JSON
-			</Button>
-			<SearchField
-				aria-label="Network request search"
-				value={query}
-				onChange={onQueryChange}
-				placeholder="Filter requests by URL…"
-			/>
-			<Select
-				aria-label="Network initiator filter"
-				value={initiatorFilter}
-				onChange={onInitiatorChange}
-				options={[
-					{ value: "", label: "All types" },
-					...initiators.map((value) => ({ value, label: value })),
-				]}
-			/>
+				<IconButton
+					icon={recording ? Square : Play}
+					label={recording ? "Stop recording" : "Start recording"}
+					variant={recording ? "outline" : "default"}
+					size="icon"
+					disabled={
+						!available || status === "unavailable" || status === "error"
+					}
+					onClick={onToggleRecording}
+				/>
+				<IconButton
+					icon={Trash2}
+					label="Clear captured requests"
+					variant="ghost"
+					onClick={onClear}
+					disabled={entryCount === 0}
+				/>
+				<IconButton
+					icon={Download}
+					label="Export JSON"
+					variant="outline"
+					onClick={onExport}
+					disabled={!hasVisibleEntries}
+				/>
+			</div>
+			<div className="devtools:flex devtools:min-w-0 devtools:items-center devtools:gap-1.5">
+				<SearchField
+					aria-label="Network request search"
+					value={query}
+					onChange={onQueryChange}
+					placeholder="Filter requests by URL…"
+					className="devtools:min-w-0 devtools:flex-1"
+				/>
+				<Select
+					aria-label="Network initiator filter"
+					value={initiatorFilter}
+					onChange={onInitiatorChange}
+					options={[
+						{ value: "", label: "All types" },
+						...initiators.map((value) => ({ value, label: value })),
+					]}
+					className="devtools:w-28 devtools:shrink-0"
+				/>
+			</div>
 		</Toolbar>
 	);
 }

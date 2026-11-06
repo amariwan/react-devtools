@@ -72,8 +72,7 @@ export function withNextDevtools<T extends object>(
 		: [];
 	const external = new Set([
 		...existingExternal,
-		"@next-devtools/host-next",
-		"@next-devtools/next",
+		"next-devtools",
 	]);
 	config.serverExternalPackages = Array.from(external);
 
@@ -84,7 +83,7 @@ export function withNextDevtools<T extends object>(
 		: [];
 	const injectModule =
 		options.instrumentationClientModule ??
-		"@next-devtools/next/instrumentation-client";
+		"next-devtools/instrumentation-client";
 	if (!existingInject.includes(injectModule)) {
 		config.instrumentationClientInject = [...existingInject, injectModule];
 	}

@@ -43,7 +43,7 @@ function validateMetadata() {
 		) {
 			throw new Error(`${manifest.name}: public packages must publish dist`);
 		}
-		if (manifest.private === true && manifest.name === "@next-devtools/next") {
+		if (manifest.private === true && manifest.name === "next-devtools") {
 			throw new Error(
 				`${manifest.name}: public entry package cannot be private`,
 			);
@@ -68,7 +68,7 @@ function validateMetadata() {
 	const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
 	if (!/^## \[Unreleased\]/m.test(changelog))
 		throw new Error("CHANGELOG.md needs an Unreleased section");
-	console.log(`metadata: PASS (${entries.length} workspace packages)`);
+	console.log(`metadata: PASS (${entries.length} workspace packages; one public package)`);
 }
 
 function validateArchives() {

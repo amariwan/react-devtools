@@ -1,63 +1,165 @@
-# React/Next.js DevTools Audit
+Tolas, ich habe auf GitHub nach weiteren UI/UX-Skills für Codex, Claude Code und andere Coding-Agents gesucht.
 
-Date: 2026-10-28
+Deine bisherige Sammlung ist bereits stark im visuellen Design. Was noch fehlt, sind spezialisierte Skills für Design Engineering, Accessibility, Animation, UX-Audits, Robustheit und Frontend-Performance.
+ Die 12 besten Ergänzungen
+Priorisiert für deine React-, Next.js- und Developer-Tools-Projekte.
+Priorität	Skill und GitHub	Schwerpunkt
+Must-have	web-design-guidelines	Über 100 Regeln für UX, Accessibility, Responsive Design und UI-Reviews
+Must-have	emil-design-eng	Hochwertige Interaktionen, Animationen und UI-Details
+Must-have	better-interface	Ganzheitlicher UI-Audit mit priorisierten Findings
+Must-have	better-accessibility	WCAG 2.2, Keyboard-Navigation, Focus und Screenreader
+Must-have	break-ui	UI mit extremen Daten, leeren Zuständen und langen Texten prüfen
+Must-have	react-best-practices	Rendering, Bundle-Größe und React-/Next.js-Performance
+Sehr gut	frontend-design	Individuelle Designs, Typografie und bewusst gewählte visuelle Identität
+Sehr gut	better-typography	Schriftgrößen, Zeilenhöhen, Textfluss und Lesbarkeit
+Sehr gut	better-layout	Layout, Spacing, responsive Strukturen und RTL
+Sehr gut	review-animations	Animationen hinsichtlich Timing, Performance und UX prüfen
+Optional	mobile-native	Mobile-Web-UX, Touch-Verhalten und native Anmutung
+Optional	webapp-testing	Browserbasierte Prüfung und UI-Tests mit Playwright
 
-## Scope
+Die Skills stammen insbesondere aus den offiziellen Sammlungen von Vercel und Anthropic sowie den Projekten von Emil Kowalski und Jakub Krehel.
 
-This audit is based on the current worktree, the repository instructions, and
-targeted source/test inspection. Existing user changes were preserved.
+GitHub+4
 
-## Findings
+Weitere interessante Skill-Sammlungen
 
-| Area                         | Evidence                                                                                                                                                                                                                                                                                                                                                    | Result                                                                                                                                                                      | Priority           |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| Open in Editor roots         | Trusted roots are resolved from server configuration; request JSON cannot replace the allowlist, with path/origin regression tests                                                                                                                                                                                                                          | Browser-controlled filesystem roots are rejected; editor boundary is PASS                                                                                                   | P0 fixed           |
-| Optional plugin activation   | Loader performs integration detection before loading optional plugins; Zustand, Redux, and TanStack Query manifests use `on-start` and register adapters through owned cleanup                                                                                                                                                                              | Optional integrations activate when detected and remain reachable; activation/cleanup is covered by browser and contract evidence                                           | PASS               |
-| On-demand plugin activation  | The shell Settings view lists `on-demand` plugins with an explicit Activate/Retry action; Playwright covers Agent/MCP activation and panel visibility                                                                                                                                                                                                       | Agent/MCP activation path is PASS; browser panel transport remains intentionally disabled                                                                                   | P2 / partial       |
-| Plugin setup failure cleanup | `createPluginRegistry.activatePlugin` rolls back owned registrations and cleanup after setup errors; contract tests cover partial setup failure                                                                                                                                                                                                             | Failed plugins do not retain panels, commands, inspectors, or subscriptions; PASS                                                                                           | P1 fixed           |
-| React runtime retention      | Fiber indexing uses bounded tree traversal and a `WeakMap` for identity; the strong index is rebuilt from current roots on refresh; Components refresh the active root from the dedicated React commit channel and ignore the DevTools shell root                                                                                                           | Replaced roots are removed from the strong index and commit-only updates are observable; native heap behavior remains unverified                                            | P2 / partial       |
-| Performance bounds           | `bun run perf:baseline` measures bounded Fiber, timeline, and diagnostics workloads and asserts configured retention limits                                                                                                                                                                                                                                 | Local baseline: 1.10 ms Fiber build, 0.66 ms/10k timeline emits, 4.55 ms/10k diagnostic records; native heap/UI latency remain unverified                                   | P2 / partial       |
-| Native browser validation    | Current reproducible evidence is the Playwright Chromium and WebKit suites; dedicated configs and CI jobs cover both plus a production smoke test                                                                                                                                                                                                           | Chromium and WebKit are PASS; native Safari and other OS/browser combinations remain unverified                                                                             | P2 / partial       |
-| Source evidence origin       | Element picker labels React Grab, Fiber definition, compile-attribute, or unavailable evidence; runtime diagnostics now enrich same-origin stack frames through bounded source-map resolution                                                                                                                                                               | Definition-vs-usage distinction is explicit; exact component JSX usage mapping and cross-origin maps remain incomplete                                                      | P2 / partial       |
-| Timeline runtime panel       | `plugins/overview/src/TimelinePanel.tsx`, bounded timeline service, silent React commit ingestion, and Playwright tests cover the panel path                                                                                                                                                                                                                | Navigation/runtime and commit metadata flow are PASS; durations are intentionally not inferred                                                                              | P2 / partial       |
-| React commit signal          | `packages/runtime-react/src/react-fiber-adapter.ts` chains `onCommitFiberRoot`; opt-in supported `Profiler` timings feed `packages/core/src/profiler-insights.ts`; tests cover the analysis                                                                                                                                                                 | Feedback-safe commit metadata and measured ranked durations are PASS; profiling sessions and render causality remain unavailable                                            | P2 / partial       |
-| Suspense diagnostics         | Fiber adapter classifies Suspense state from `memoizedState` and Components panel displays boundary status; contract and browser tests cover resolved/suspended data                                                                                                                                                                                        | Explicit client-side boundary status is PASS; transition history and server-component metadata remain unavailable                                                           | P2 / partial       |
-| Route execution metadata     | Config injects the detected `app`/`src/app` root and static server/client file metadata; route scanner and config tests cover both paths                                                                                                                                                                                                                    | Static execution classification is PASS; live Server Component/RSC metadata remains unavailable                                                                             | P2 / partial       |
-| Network workflow             | PerformanceObserver-backed bounded service redacts credentials/query values; Network panel now exposes recording, URL search, initiator filtering, optional browser-exposed HTTP status, details, export, and browser coverage text                                                                                                                         | Browser-observable resource timing workflow is PASS; request methods, server-fetch coverage, and request bodies remain unavailable                                          | P2 / partial       |
-| Universal search             | Command palette indexes bounded component, route, timeline, network, and diagnostic snapshots and routes typed results to their owning panels; contract and browser tests cover runtime navigation search                                                                                                                                                   | Runtime evidence search is PASS for currently materialized snapshots; lazy detail hydration and cross-session search remain unavailable                                     | P2 / partial       |
-| Debug sessions               | Timeline panel captures two bounded sanitized runtime snapshots, compares event counts/profiler measurements, exports the latest session, and MCP export returns the same structured session record; `sessionStorage` persistence and opt-in bounded `localStorage` cross-tab sync are covered by contract/browser evidence                                 | Local capture/compare/export, cross-reload persistence, and opt-in cross-tab sync are PASS; durable history beyond two sessions remains unavailable                         | P2 / partial       |
-| Runtime diagnostics          | Core diagnostics service bounds/normalizes browser errors, upgrades same-origin stack frames through bounded source maps when available, and exposes explicit approximate fallback; browser E2E and `recent-errors`/debug-session export cover sanitized evidence; public server entry exposes an opt-in adapter for Next's supported `onRequestError` hook | Client-side capture, source-map enrichment, and opt-in server-hook evidence are PASS; automatic sink wiring, cross-origin maps, and JSX usage navigation remain unavailable | P2 / partial       |
-| Agent/MCP request boundary   | JSON-line protocol enforces read-only tool allowlist, session ownership, bounded input, strict request shape, bounded lines, and timeout; sequential caller-owned stdio adapter and contract tests cover malformed, unauthorized, aborted, and transport requests                                                                                           | Protocol and stdio boundary are PASS; host-level process authorization and IPC remain external follow-up                                                                    | P1 fixed / partial |
-| Release readiness            | Public runtime dependency closure is publishable; `.changeset/config.json`, release changeset, package-workspace pack smoke test, isolated local-mirror consumer install, and `.github/workflows/verify.yml` with build/typecheck/lint/unit/compatibility/changeset/performance/Chromium/WebKit/production E2E gates exist                                  | Archive and local dependency resolution are verified; hosted CI execution and registry install remain unverified                                                            | P2 / partial       |
 
-## Release blocker
 
-No repository `LICENSE` file or package `license` field is present. The public
-GitHub remote does not establish a legal license by itself, so release
-readiness remains contingent on the project owner selecting and recording one.
 
-## Verification baseline
 
-- `bun --version`: 1.4.4
-- `node --version`: v26.12.1
-- The first attempted Vitest command was invalid because the Vitest CLI does not support `--runInBand`; it is not a product test result.
-- `bun run test:e2e`: PASS (13 Playwright tests against the showcase app, including live Overview health refresh, Pages route search/navigation, Timeline, cross-tab debug-session sync, picker, universal runtime search, read-only state-bridge, and on-demand Agent/MCP activation flows).
-- `bun run test:e2e:webkit`: PASS (13 Playwright tests; WebKit 27.2 installed locally for this verification).
-- `bun run test:e2e:production`: PASS (1 optimized `next start` smoke test; no launcher, auto-mount root, or global DevTools root).
-- Local gates: PASS — 279 unit tests, 13 Chromium and 13 WebKit Playwright tests, full workspace build/typecheck, ESLint, changed-file Prettier, and `git diff --check`. Repo-wide Prettier remains blocked by 34 pre-existing files.
-- `bunx changeset status`: PASS; all runtime packages required by the public package are in the release graph.
-- Correct package archive smoke test: PASS; `bun pm pack` runs from `packages/next`, produces `@next-devtools/next` without `workspace:*` dependencies, and excludes source/config/test artifacts. Running it from the monorepo root was reproduced as an invalid root archive path.
-- Isolated consumer install: PASS; the public archive and internal runtime packages install from a temporary local file mirror and the public entry imports successfully. Hosted registry resolution remains unverified.
-- Public-package closure test: PASS; no transitive `@next-devtools/*` runtime dependency is private.
-- Native Safari smoke check: NOT RUN in the current reproducible workspace; do not treat native Safari as verified.
-- ProjectAtlas is installed (`0.4.4`) but no current index is available; scoped native inspection was used.
-- Existing `PARITY_REPORT.md` claims broader passing checks; those claims were not re-used as proof for this audit.
-- `docs/feature-parity.md` and `docs/reuse-evaluation.md` now record the evidence-backed capability boundary and dependency decisions.
 
-## Initial implementation boundary
 
-This pass fixes the P0/P1 findings, bounds the strong React Fiber index, and adds
-regression tests. Other OS/browser combinations remain follow-up work. The CI
-workflow is configured for the passing local gates plus Chromium, WebKit, and
-production browser jobs; hosted execution and registry installation remain
-unverified.
+
+
+Emil Kowalski — Design Engineering
+
+Meine erste Empfehlung. Enthält auch animate, animation-performance, find-animation-opportunities, prototype und apple-design. Besonders gut für Interfaces, die sich hochwertig anfühlen sollen.
+
+
+
+
+
+
+
+
+
+
+
+
+Jakub Krehel — Interface Skills
+
+Spezialisierte Regeln für Typografie, Farben, Layout, Accessibility und UX-Writing. Gut für konsistente, professionelle Produktoberflächen.
+
+
+
+
+
+
+
+
+
+
+
+
+UX/UI Agent Skills
+
+Größere Sammlung mit 19 Skills, darunter Design Tokens, Komponenten, UX-Writing, Dashboards, Prototyping und Performance. Vielseitig, aber mit Überschneidungen zu deiner Sammlung.
+
+GitHub
+
+
+
+
+
+
+
+
+
+
+
+
+
+Taste Skill Classics
+
+Ergänzende Stilrichtungen wie high-end-visual-design, minimalist-ui und industrial-brutalist-ui. Praktisch, wenn du verschiedene Designrichtungen ausprobieren möchtest.
+
+GitHub
+
+
+
+
+Meine empfohlene Kombination für dich
+Du hast bereits:
+- ai-design-skills
+- taste-skill / design-taste-frontend
+- impeccable
+- ui-ux-pro-max
+- unslop
+design-taste-frontend gehört bereits zu taste-skill und muss nicht separat doppelt installiert werden.
+
+GitHub
+
+Ich würde deine Sammlung so organisieren:
+Aufgabe	Skills
+Designkonzept	ui-ux-pro-max, frontend-design
+Visuelle Qualität	design-taste-frontend, unslop
+Design-Audit	impeccable, better-interface
+UX und Accessibility	web-design-guidelines, better-accessibility
+Animationen	emil-design-eng, review-animations
+Layout und Typografie	better-layout, better-typography
+React-Performance	react-best-practices
+Robustheit und Qualität	break-ui, webapp-testing
+
+Wichtig: Nicht jeden Skill gleichzeitig aktivieren. Je nach Aufgabe reichen normalerweise drei bis fünf spezialisierte Skills.
+Installation
+Die folgenden Befehle kannst du direkt in deinem Projektverzeichnis ausführen:
+
+# UI/UX Quality
+npx skills add vercel-labs/agent-skills --skill web-design-guidelines
+
+# Design Engineering
+npx skills add emilkowalski/skills --skill emil-design-eng
+npx skills add emilkowalski/skills --skill review-animations
+npx skills add emilkowalski/skills --skill break-ui
+
+# Interface Quality
+npx skills add jakubkrehel/skills --skill better-interface
+npx skills add jakubkrehel/skills --skill better-accessibility
+npx skills add jakubkrehel/skills --skill better-typography
+npx skills add jakubkrehel/skills --skill better-layout
+
+# Visual Design
+npx skills add anthropics/skills --skill frontend-design
+
+
+
+Die Befehle sind zur Installation gedacht; ich habe noch nichts in deinem Projekt installiert oder geändert.
+
+Speziell für dein react-devtools-Projekt
+Für amariwan/react-devtools würde ich vor allem fünf Anforderungen setzen:
+1. Developer-Tool-UX: Hohe Informationsdichte, klare Hierarchie, schnelle Navigation und sinnvolle Shortcuts.
+2. Designkonsistenz: Einheitliches Token-System für Farben, Abstände, Typografie, Komponenten und Zustände.
+3. Interaktionsqualität: Präzise Hover-, Focus-, Selection- und Transition-Zustände.
+4. Robustheit: Große Component Trees, lange Namen, leere Daten und komplexe Graphen sauber darstellen.
+5. Visual QA: Jede relevante Ansicht anhand gerenderter Screenshots prüfen.
+Meine persönliche Top-3-Ergänzung für dich wäre:
+
+1. web-design-guidelines
+
+Strenger Qualitätsmaßstab für bestehende UI
+
+
+
+2. emil-design-eng
+
+Professioneller Feinschliff für Interaktionen
+
+
+
+3. better-accessibility
+
+Bedienbarkeit, Tastatursteuerung und Barrierefreiheit
+
+
+
+Damit ergänzt du deine bereits starken visuellen Skills um die Eigenschaften, die ein Developer-Tool auf professionellem Niveau ausmachen: Präzision, Geschwindigkeit, Zugänglichkeit und ausgereifte Interaktionen.

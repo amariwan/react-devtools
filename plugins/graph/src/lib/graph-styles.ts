@@ -111,7 +111,16 @@ export function resolveGraphTheme(element?: Element | null): GraphTheme {
 		return value.length > 0 ? value : fallback;
 	};
 
-	const themeAttr = target.closest("[data-theme]")?.getAttribute("data-theme");
+	const shadowRoot = target.getRootNode();
+	const shadowHost =
+		typeof ShadowRoot !== "undefined" && shadowRoot instanceof ShadowRoot
+			? shadowRoot.host
+			: null;
+	const themeSource =
+		target.closest("[data-theme]") ??
+		shadowHost?.closest("[data-theme]") ??
+		(shadowHost?.hasAttribute("data-theme") ? shadowHost : null);
+	const themeAttr = themeSource?.getAttribute("data-theme");
 	const background = read("--background", LIGHT_THEME.background);
 	const isDark =
 		themeAttr === "dark" || (themeAttr !== "light" && isDarkColor(background));
@@ -200,7 +209,7 @@ export function buildGraphStylesheet(
 			style: {
 				label: "data(label)",
 				"font-family": theme.fontFamily,
-				"font-size": 10,
+				"font-size": 11,
 				"font-weight": 500,
 				color: theme.text,
 				"text-valign": "bottom",
@@ -209,7 +218,7 @@ export function buildGraphStylesheet(
 				"text-wrap": "ellipsis",
 				"text-max-width": "110px",
 				"text-background-color": theme.surface,
-				"text-background-opacity": 0.82,
+				"text-background-opacity": 0.94,
 				"text-background-padding": "2px",
 				"text-background-shape": "roundrectangle",
 				"min-zoomed-font-size": 6,
@@ -231,7 +240,7 @@ export function buildGraphStylesheet(
 				shape: "round-rectangle",
 				width: 46,
 				height: 30,
-				"font-size": 11,
+				"font-size": 12,
 				"font-weight": 600,
 				"text-max-width": "140px",
 			},
@@ -291,11 +300,30 @@ export function buildGraphStylesheet(
 			},
 		},
 		{
+			selector: "node.labels-hidden",
+			style: {
+				label: "",
+				"text-opacity": 0,
+				"text-background-opacity": 0,
+				"text-outline-opacity": 0,
+			},
+		},
+		{
+			selector:
+				"node.labels-hidden[root], node.labels-hidden.selected, node.labels-hidden.neighbor",
+			style: {
+				label: "data(label)",
+				"text-opacity": 1,
+				"text-background-opacity": 0.94,
+				"text-outline-opacity": 0,
+			},
+		},
+		{
 			selector: "edge",
 			style: {
 				width: 1.25,
-				"line-color": theme.border,
-				"target-arrow-color": theme.border,
+				"line-color": theme.muted,
+				"target-arrow-color": theme.muted,
 				"target-arrow-shape": "triangle",
 				"arrow-scale": 0.7,
 				"curve-style": "bezier",

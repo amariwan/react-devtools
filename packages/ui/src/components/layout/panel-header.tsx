@@ -20,13 +20,13 @@ export function PanelHeader({
 		<div
 			data-slot="panel-header"
 			className={cn(
-				"devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-3 devtools:border-b devtools:border-border devtools:bg-card devtools:px-4 devtools:py-3.5",
+				"devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-3 devtools:border-b devtools:border-border devtools:bg-card devtools:px-4 devtools:py-3.5 devtools:@max-[520px]/devtools:py-2",
 				className,
 			)}
 			{...props}
 		>
 			<div className="devtools:min-w-0 devtools:flex-1">
-				<h2 className="devtools:truncate devtools:text-sm devtools:font-semibold devtools:tracking-tight devtools:text-foreground">
+				<h2 className="devtools:truncate devtools:text-sm devtools:font-medium devtools:text-foreground devtools:@max-[520px]/devtools:sr-only">
 					{title}
 				</h2>
 				{description ? (

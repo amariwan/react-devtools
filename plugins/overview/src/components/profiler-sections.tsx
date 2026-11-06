@@ -5,6 +5,15 @@ type ProfilerSectionsProps = {
 	profiler: ProfilerInsights;
 };
 
+const sectionClassName =
+	"devtools:rounded-md devtools:border devtools:border-border devtools:p-2.5";
+const headingClassName =
+	"devtools:mb-1.5 devtools:text-sm devtools:font-semibold";
+const detailClassName =
+	"devtools:mb-2 devtools:text-[11px] devtools:text-muted-foreground";
+const listClassName =
+	"devtools:m-0 devtools:space-y-1 devtools:pl-5 devtools:text-[11px]";
+
 export function ProfilerSections({
 	comparison,
 	profiler,
@@ -12,34 +21,22 @@ export function ProfilerSections({
 	return (
 		<>
 			{comparison && (
-				<section
-					style={{
-						border: "1px solid var(--border, #e4e4e7)",
-						borderRadius: 6,
-						padding: 10,
-					}}
-				>
-					<h3 style={{ fontSize: 13, margin: "0 0 6px" }}>
-						Profiler · before / after
-					</h3>
-					<p
-						style={{
-							fontSize: 11,
-							color: "var(--muted-foreground, #71717a)",
-							margin: "0 0 8px",
-						}}
-					>
+				<section className={sectionClassName}>
+					<h3 className={headingClassName}>Profiler · before / after</h3>
+					<p className={detailClassName}>
 						Measured difference from the captured baseline; no render cause is
 						inferred. {comparison.totalCommitDelta >= 0 ? "+" : ""}
 						{comparison.totalCommitDelta} commits ·{" "}
 						{comparison.totalActualDurationDelta >= 0 ? "+" : ""}
 						{comparison.totalActualDurationDelta.toFixed(2)} ms actual
 					</p>
-					<ul style={{ margin: 0, paddingLeft: 20, fontSize: 11 }}>
+					<ul className={listClassName}>
 						{comparison.ranked.slice(0, 10).map((rank) => (
 							<li key={rank.id}>
-								<span style={{ fontFamily: "monospace" }}>{rank.id}</span> ·{" "}
-								{rank.status} · {rank.commitDelta >= 0 ? "+" : ""}
+								<span className="devtools:font-mono devtools:text-foreground">
+									{rank.id}
+								</span>{" "}
+								· {rank.status} · {rank.commitDelta >= 0 ? "+" : ""}
 								{rank.commitDelta} commits ·{" "}
 								{rank.actualDurationDelta >= 0 ? "+" : ""}
 								{rank.actualDurationDelta.toFixed(2)} ms
@@ -50,55 +47,42 @@ export function ProfilerSections({
 			)}
 			{profiler.commits.length > 0 && (
 				<>
-					<section
-						style={{
-							border: "1px solid var(--border, #e4e4e7)",
-							borderRadius: 6,
-							padding: 10,
-						}}
-					>
-						<h3 style={{ fontSize: 13, margin: "0 0 6px" }}>
+					<section className={sectionClassName}>
+						<h3 className={headingClassName}>
 							React Profiler · ranked renders
 						</h3>
-						<p
-							style={{
-								fontSize: 11,
-								color: "var(--muted-foreground, #71717a)",
-								margin: "0 0 8px",
-							}}
-						>
+						<p className={detailClassName}>
 							{profiler.commits.length} commits ·{" "}
 							{profiler.totalActualDuration.toFixed(2)} ms actual · max{" "}
 							{profiler.maxActualDuration.toFixed(2)} ms
 						</p>
-						<ol style={{ margin: 0, paddingLeft: 20, fontSize: 11 }}>
+						<ol className={listClassName}>
 							{profiler.ranked.slice(0, 10).map((rank) => (
 								<li key={rank.id}>
-									<span style={{ fontFamily: "monospace" }}>{rank.id}</span> ·{" "}
-									{rank.commits} commits · {rank.totalActualDuration.toFixed(2)}{" "}
-									ms total · {rank.averageActualDuration.toFixed(2)} ms avg
+									<span className="devtools:font-mono devtools:text-foreground">
+										{rank.id}
+									</span>{" "}
+									· {rank.commits} commits ·{" "}
+									{rank.totalActualDuration.toFixed(2)} ms total ·{" "}
+									{rank.averageActualDuration.toFixed(2)} ms avg
 								</li>
 							))}
 						</ol>
 					</section>
 					<section
 						aria-label="Recent React profiler commits"
-						style={{
-							border: "1px solid var(--border, #e4e4e7)",
-							borderRadius: 6,
-							padding: 10,
-						}}
+						className={sectionClassName}
 					>
-						<h3 style={{ fontSize: 13, margin: "0 0 6px" }}>
-							Recent measured commits
-						</h3>
-						<ul style={{ margin: 0, paddingLeft: 20, fontSize: 11 }}>
+						<h3 className={headingClassName}>Recent measured commits</h3>
+						<ul className={listClassName}>
 							{[...profiler.commits]
 								.reverse()
 								.slice(0, 10)
 								.map((commit) => (
 									<li key={commit.eventId}>
-										<span style={{ fontFamily: "monospace" }}>{commit.id}</span>{" "}
+										<span className="devtools:font-mono devtools:text-foreground">
+											{commit.id}
+										</span>{" "}
 										· {commit.phase} · {commit.actualDuration.toFixed(2)} ms
 										actual · {commit.baseDuration.toFixed(2)} ms base
 									</li>

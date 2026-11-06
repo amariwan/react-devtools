@@ -174,6 +174,12 @@ function collectRootsFromDom(
 	if (!doc) return [];
 	const roots: FiberLike[] = [];
 	const seen = new Set<FiberLike>();
+	const addRoot = (fiber: FiberLike | undefined) => {
+		if (fiber && !seen.has(fiber)) {
+			seen.add(fiber);
+			roots.push(fiber);
+		}
+	};
 	const rootNode = doc.documentElement ?? doc.body;
 	if (!rootNode) return roots;
 	const showElement = windowLike?.NodeFilter?.SHOW_ELEMENT ?? 1;
@@ -183,18 +189,28 @@ function collectRootsFromDom(
 	let inspected = 0;
 	while (element && inspected < 10000) {
 		inspected++;
+		if (element.closest("next-devtools-root, nextjs-portal, devtools-root")) {
+			element = walker.nextNode() as Element | null;
+			continue;
+		}
 		const keys = Object.keys(element);
 		const containerKey = keys.find((key) =>
 			key.startsWith("__reactContainer$"),
 		);
 		if (containerKey) {
-			const fiber = (element as unknown as Record<string, unknown>)[
-				containerKey
-			] as FiberLike | undefined;
-			if (fiber && !seen.has(fiber)) {
-				seen.add(fiber);
-				roots.push(fiber);
-			}
+			addRoot(
+				(element as unknown as Record<string, unknown>)[containerKey] as
+					| FiberLike
+					| undefined,
+			);
+		} else if (
+			keys.some(
+				(key) =>
+					key.startsWith("__reactFiber$") ||
+					key.startsWith("__reactInternalInstance$"),
+			)
+		) {
+			addRoot(findFiberFromDomNode(element));
 		}
 		element = walker.nextNode() as Element | null;
 	}

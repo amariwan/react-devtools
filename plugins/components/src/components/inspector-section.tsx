@@ -11,46 +11,20 @@ export function InspectorSection({
 }) {
 	return (
 		<section
-			style={{
-				border: "1px solid var(--border, #e4e4e7)",
-				borderRadius: 4,
-				padding: 6,
-			}}
+			aria-label={title}
+			className="devtools:rounded-sm devtools:border devtools:border-border devtools:p-1.5"
 		>
-			<div
-				style={{
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "space-between",
-					fontSize: 11,
-					fontWeight: 600,
-					marginBottom: 4,
-				}}
-			>
-				<span>{title}</span>
+			<h3 className="devtools:m-0 devtools:mb-1 devtools:flex devtools:items-center devtools:justify-between devtools:text-[11px] devtools:font-semibold">
+				{title}
 				{typeof count === "number" ? (
-					<span
-						style={{
-							color: "var(--muted-foreground, #71717a)",
-							fontWeight: 400,
-						}}
-					>
+					<span className="devtools:font-normal devtools:text-muted-foreground">
 						{count}
 					</span>
 				) : null}
-			</div>
-			<pre
-				style={{
-					margin: 0,
-					fontSize: 11,
-					whiteSpace: "pre-wrap",
-					wordBreak: "break-word",
-					fontFamily: "monospace",
-					color: "var(--muted-foreground, #3f3f46)",
-				}}
-			>
+			</h3>
+			<div className="devtools:whitespace-pre-wrap devtools:break-words devtools:font-mono devtools:text-[11px] devtools:text-muted-foreground">
 				{children}
-			</pre>
+			</div>
 		</section>
 	);
 }

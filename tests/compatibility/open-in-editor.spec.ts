@@ -1,6 +1,6 @@
 import path from "node:path";
-import { openInEditorWithAuthorization } from "@next-devtools/host-next";
-import { handleOpenInEditorRequest } from "@next-devtools/next/server";
+import { openInEditorWithAuthorization } from "next-devtools/server";
+import { handleOpenInEditorRequest } from "next-devtools/server";
 import { describe, expect, it, vi } from "vitest";
 
 describe("open-in-editor security and integration", () => {

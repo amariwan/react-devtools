@@ -21,7 +21,7 @@ export function ErrorState({
 		<div
 			role="alert"
 			className={cn(
-				"devtools:flex devtools:flex-col devtools:items-center devtools:justify-center devtools:gap-3 devtools:px-6 devtools:py-16 devtools:text-center",
+				"devtools:flex devtools:flex-col devtools:items-center devtools:justify-center devtools:gap-3 devtools:px-6 devtools:py-8 devtools:text-center",
 				className,
 			)}
 		>

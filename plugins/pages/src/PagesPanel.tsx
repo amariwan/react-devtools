@@ -10,6 +10,7 @@ import {
 import * as React from "react";
 import { RouteRow } from "./components/route-row.js";
 import { buildPagesData } from "./pages-data.js";
+import { matchesRoutePattern } from "./route-target.js";
 
 export default function PagesPanel({ registry }: { registry: PluginRegistry }) {
 	const service = registry.services.get<RouteRuntimeService>(
@@ -49,27 +50,18 @@ export default function PagesPanel({ registry }: { registry: PluginRegistry }) {
 	const navigateToPage = (target: string) => {
 		if (typeof window === "undefined") return;
 		window.history.pushState({}, "", target);
-		service?.setLocation(window.location.href);
 	};
 
 	return (
-		<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+		<div className="devtools:flex devtools:flex-col devtools:gap-3">
 			<PanelHeader
 				title="Pages / Router"
 				description={`${data.segmentCount} segments · ${data.pageCount} pages`}
 				actions={<StatusDot status={data.status} />}
 			/>
-			<div
-				style={{
-					fontSize: 12,
-					color: "var(--muted-foreground)",
-					overflowWrap: "anywhere",
-				}}
-			>
+			<div className="devtools:break-all devtools:text-xs devtools:text-muted-foreground">
 				Current route{" "}
-				<code style={{ color: "var(--foreground)" }}>
-					{data.activePathname}
-				</code>
+				<code className="devtools:text-foreground">{data.activePathname}</code>
 			</div>
 			<SearchField
 				value={query}
@@ -91,22 +83,13 @@ export default function PagesPanel({ registry }: { registry: PluginRegistry }) {
 					description="Change the route search to see discovered pages."
 				/>
 			) : (
-				<ul
-					style={{
-						listStyle: "none",
-						padding: 0,
-						margin: 0,
-						display: "flex",
-						flexDirection: "column",
-						gap: 4,
-					}}
-				>
+				<ul className="devtools:m-0 devtools:flex devtools:list-none devtools:flex-col devtools:gap-1 devtools:p-0">
 					{visiblePages.map((page) => (
 						<RouteRow
 							key={page.id}
 							page={page}
 							values={parameterValues[page.id] ?? {}}
-							active={page.urlPattern === data.activePathname}
+							active={matchesRoutePattern(page, data.activePathname)}
 							onParameterChange={(name, value) =>
 								setParameterValues((current) => ({
 									...current,

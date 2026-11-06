@@ -1,11 +1,11 @@
 # Architecture overview
 
 The workspace is a Bun monorepo. The public entry point is
-`@next-devtools/next`; the runtime is split into contracts, host integration,
+`next-devtools`; the runtime is split into contracts, host integration,
 React inspection, core services, plugins, and the browser UI.
 
 ```text
-Next config/instrumentation -> @next-devtools/next -> @next-devtools/ui
+Next config/instrumentation -> next-devtools -> internal runtime/UI sources
                                       |                     |
                                       +--> host-next        +--> plugin registry
                                                             +--> runtime services

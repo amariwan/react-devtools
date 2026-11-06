@@ -52,11 +52,11 @@ export default defineConfig({
 				"packages/source-inspector/src/index.ts",
 			),
 			"@next-devtools/ui": path.resolve(repoRoot, "packages/ui/src/index.ts"),
-			"@next-devtools/next/server": path.resolve(
+			"next-devtools/server": path.resolve(
 				repoRoot,
 				"packages/next/src/server.ts",
 			),
-			"@next-devtools/next": path.resolve(
+			"next-devtools": path.resolve(
 				repoRoot,
 				"packages/next/src/index.ts",
 			),

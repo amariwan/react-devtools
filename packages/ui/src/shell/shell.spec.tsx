@@ -12,18 +12,21 @@ import { DevtoolsShell } from "./shell";
 describe("DevtoolsShell", () => {
 	it("renders disabled", () => {
 		const store: Record<string, string> = {};
-		(window as unknown as { localStorage: Storage }).localStorage = {
-			getItem: (k: string) => store[k] ?? null,
-			setItem: (k: string, v: string) => {
-				store[k] = v;
+		Object.defineProperty(window, "localStorage", {
+			configurable: true,
+			value: {
+				getItem: (k: string) => store[k] ?? null,
+				setItem: (k: string, v: string) => {
+					store[k] = v;
+				},
+				removeItem: (k: string) => {
+					delete store[k];
+				},
+				clear: () => {},
+				key: () => null,
+				length: 0,
 			},
-			removeItem: (k: string) => {
-				delete store[k];
-			},
-			clear: () => {},
-			key: () => null,
-			length: 0,
-		};
+		});
 		const services = createCoreRuntimeServices();
 		const registry = createPluginRegistry({ runtimeServices: services });
 		const { container } = render(

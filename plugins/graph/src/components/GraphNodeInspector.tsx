@@ -1,6 +1,6 @@
 import { openInEditorAction } from "@next-devtools/host-next/open-in-editor-action";
 import type { DependencySource } from "@next-devtools/runtime-react";
-import { Badge, Button } from "@next-devtools/ui";
+import { Badge, Button, ExternalLink, IconButton } from "@next-devtools/ui";
 import * as React from "react";
 import type { GraphView } from "../lib/graph-model.js";
 import {
@@ -44,13 +44,7 @@ export function GraphNodeInspector({
 
 	if (!node) {
 		return (
-			<div
-				style={{
-					padding: 12,
-					fontSize: 12,
-					color: "var(--muted-foreground)",
-				}}
-			>
+			<div className="devtools:p-3 devtools:text-xs devtools:text-muted-foreground">
 				Select a node to inspect its verified reactive metadata.
 			</div>
 		);
@@ -79,18 +73,11 @@ export function GraphNodeInspector({
 	};
 
 	return (
-		<div
-			style={{
-				padding: 12,
-				display: "flex",
-				flexDirection: "column",
-				gap: 8,
-				fontSize: 12,
-				overflow: "auto",
-			}}
-		>
-			<div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-				<span style={{ fontWeight: 600, fontSize: 13 }}>{node.label}</span>
+		<div className="devtools:flex devtools:flex-col devtools:gap-2 devtools:overflow-auto devtools:p-3 devtools:text-xs">
+			<div className="devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-1.5">
+				<span className="devtools:break-all devtools:text-sm devtools:font-semibold">
+					{node.label}
+				</span>
 				<Badge variant="secondary">{NODE_KIND_META[node.kind].label}</Badge>
 				<Badge
 					variant={
@@ -105,148 +92,108 @@ export function GraphNodeInspector({
 				</Badge>
 			</div>
 
-			<div style={{ color: "var(--muted-foreground)", fontSize: 11 }}>
+			<div className="devtools:text-[11px] devtools:text-muted-foreground">
 				{NODE_KIND_META[node.kind].description}
 			</div>
 
 			{node.note ? (
-				<div
-					style={{
-						fontSize: 11,
-						padding: 8,
-						borderRadius: 6,
-						background: "var(--muted, rgba(127,127,127,0.08))",
-					}}
-				>
+				<div className="devtools:rounded-md devtools:bg-muted devtools:p-2 devtools:text-[11px] devtools:leading-relaxed">
 					{node.note}
 				</div>
 			) : null}
 
-			<dl
-				style={{
-					display: "grid",
-					gridTemplateColumns: "110px 1fr",
-					gap: 4,
-					margin: 0,
-				}}
-			>
-				<dt style={{ color: "var(--muted-foreground)" }}>Component id</dt>
-				<dd
-					style={{
-						margin: 0,
-						fontFamily: "var(--font-mono, monospace)",
-						fontSize: 11,
-					}}
-				>
+			<dl className="devtools:m-0 devtools:grid devtools:grid-cols-[110px_minmax(0,1fr)] devtools:gap-x-2 devtools:gap-y-1">
+				<dt className="devtools:text-muted-foreground">Component id</dt>
+				<dd className="devtools:m-0 devtools:break-all devtools:font-mono devtools:text-[11px]">
 					{node.componentId}
 				</dd>
-				<dt style={{ color: "var(--muted-foreground)" }}>Depth</dt>
-				<dd style={{ margin: 0 }}>{node.depth}</dd>
+				<dt className="devtools:text-muted-foreground">Depth</dt>
+				<dd className="devtools:m-0 devtools:tabular-nums">{node.depth}</dd>
 				{node.hookIndex !== undefined ? (
 					<>
-						<dt style={{ color: "var(--muted-foreground)" }}>Hook index</dt>
-						<dd style={{ margin: 0 }}>{node.hookIndex}</dd>
+						<dt className="devtools:text-muted-foreground">Hook index</dt>
+						<dd className="devtools:m-0 devtools:tabular-nums">
+							{node.hookIndex}
+						</dd>
 					</>
 				) : null}
 				{node.valueLabel ? (
 					<>
-						<dt style={{ color: "var(--muted-foreground)" }}>Value</dt>
-						<dd
-							style={{
-								margin: 0,
-								fontFamily: "var(--font-mono, monospace)",
-								fontSize: 11,
-							}}
-						>
+						<dt className="devtools:text-muted-foreground">Value</dt>
+						<dd className="devtools:m-0 devtools:break-all devtools:font-mono devtools:text-[11px]">
 							{node.valueLabel}
 						</dd>
 					</>
 				) : null}
 				{node.depsLabel ? (
 					<>
-						<dt style={{ color: "var(--muted-foreground)" }}>Dependencies</dt>
-						<dd
-							style={{
-								margin: 0,
-								fontFamily: "var(--font-mono, monospace)",
-								fontSize: 11,
-							}}
-						>
+						<dt className="devtools:text-muted-foreground">Dependencies</dt>
+						<dd className="devtools:m-0 devtools:break-all devtools:font-mono devtools:text-[11px]">
 							{node.depsLabel}
 						</dd>
 					</>
 				) : null}
 				{node.providerDisplayName ? (
 					<>
-						<dt style={{ color: "var(--muted-foreground)" }}>Provider</dt>
-						<dd style={{ margin: 0 }}>{node.providerDisplayName}</dd>
+						<dt className="devtools:text-muted-foreground">Provider</dt>
+						<dd className="devtools:m-0 devtools:break-all">
+							{node.providerDisplayName}
+						</dd>
 					</>
 				) : null}
 				{sourceText ? (
 					<>
-						<dt style={{ color: "var(--muted-foreground)" }}>Source</dt>
-						<dd
-							style={{
-								margin: 0,
-								fontFamily: "var(--font-mono, monospace)",
-								fontSize: 11,
-							}}
-						>
+						<dt className="devtools:text-muted-foreground">Source</dt>
+						<dd className="devtools:m-0 devtools:break-all devtools:font-mono devtools:text-[11px]">
 							{sourceText}
 						</dd>
 					</>
 				) : null}
-				<dt style={{ color: "var(--muted-foreground)" }}>Evidence source</dt>
-				<dd style={{ margin: 0, fontSize: 11 }}>{node.evidenceSource}</dd>
+				<dt className="devtools:text-muted-foreground">Evidence source</dt>
+				<dd className="devtools:m-0 devtools:break-words devtools:text-[11px]">
+					{node.evidenceSource}
+				</dd>
 			</dl>
 
 			{source ? (
-				<Button size="sm" variant="outline" onClick={openInEditor}>
-					Open in editor
-				</Button>
+				<IconButton
+					icon={ExternalLink}
+					label="Open source in editor"
+					variant="outline"
+					onClick={openInEditor}
+				/>
 			) : (
-				<div style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
+				<div className="devtools:text-[11px] devtools:text-muted-foreground">
 					No validated source location is available for this node.
 				</div>
 			)}
 			{openStatus ? (
 				<div
-					style={{
-						fontSize: 11,
-						color: openStatus.ok
-							? "var(--success, #16a34a)"
-							: "var(--destructive, #dc2626)",
-					}}
+					className={`devtools:text-[11px] ${openStatus.ok ? "devtools:text-success" : "devtools:text-destructive"}`}
 				>
 					{openStatus.text}
 				</div>
 			) : null}
 
 			{relatedEdges.length > 0 ? (
-				<div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-					<div style={{ fontWeight: 600, fontSize: 11 }}>Related edges</div>
+				<div className="devtools:flex devtools:flex-col devtools:gap-1">
+					<div className="devtools:text-[11px] devtools:font-semibold">
+						Related edges
+					</div>
 					{relatedEdges.map((edge) => {
 						const otherId = edge.source === node.id ? edge.target : edge.source;
 						const other = nodeById(view, otherId);
 						return (
-							<button
+							<Button
 								key={edge.id}
-								type="button"
 								onClick={() => onSelectNode(otherId)}
-								style={{
-									textAlign: "left",
-									padding: "4px 6px",
-									borderRadius: 4,
-									border: "1px solid var(--border, rgba(127,127,127,0.25))",
-									background: "transparent",
-									color: "var(--foreground)",
-									cursor: "pointer",
-									fontSize: 11,
-								}}
+								variant="outline"
+								size="xs"
+								className="devtools:h-auto devtools:min-h-7 devtools:justify-start devtools:whitespace-normal devtools:text-left devtools:font-normal"
 							>
 								{EDGE_KIND_META[edge.kind].label} · {other?.label ?? otherId} ·{" "}
 								{EVIDENCE_META[edge.evidence].label}
-							</button>
+							</Button>
 						);
 					})}
 				</div>

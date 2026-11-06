@@ -50,9 +50,11 @@ export default function ZustandPanel({
 		<div className="devtools:flex devtools:min-h-0 devtools:flex-col">
 			<PanelHeader
 				title="Zustand"
-				description="Inspect registered store snapshots."
 				actions={
-					<Badge variant="secondary">{data.adapters.length} adapters</Badge>
+					<Badge variant="secondary">
+						{data.adapters.length}{" "}
+						{data.adapters.length === 1 ? "adapter" : "adapters"}
+					</Badge>
 				}
 			/>
 			{!data.hasStores ? (
@@ -60,8 +62,17 @@ export default function ZustandPanel({
 					title="No Zustand adapter connected"
 					description="Register a store adapter in your application to inspect live state."
 				/>
+			) : data.adapters.length === 0 ? (
+				<EmptyState
+					title={
+						data.globalCount === 1
+							? "Zustand store detected"
+							: `${data.globalCount} Zustand stores detected`
+					}
+					description="Register a runtime adapter to inspect live state."
+				/>
 			) : (
-				<div className="devtools:p-3 devtools:space-y-3">
+				<div className="devtools:p-3">
 					<StoreInspector
 						adapters={data.adapters}
 						selectedAdapterId={snapshot?.data.selectedAdapterId}
@@ -76,11 +87,6 @@ export default function ZustandPanel({
 							await service?.refresh();
 						}}
 					/>
-					{data.globalCount > 0 ? (
-						<p className="devtools:text-xs devtools:text-muted-foreground">
-							Global stores detected. Register adapters to inspect their state.
-						</p>
-					) : null}
 				</div>
 			)}
 		</div>

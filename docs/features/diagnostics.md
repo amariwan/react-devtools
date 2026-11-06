@@ -6,7 +6,7 @@ development. Server errors can be connected through Next.js' supported
 
 ```ts
 // instrumentation.ts
-import { createNextRequestErrorHandler } from "@next-devtools/next/server";
+import { createNextRequestErrorHandler } from "next-devtools/server";
 
 export const onRequestError = createNextRequestErrorHandler((diagnostic) => {
   // Connect this to the application's development-only diagnostic sink.

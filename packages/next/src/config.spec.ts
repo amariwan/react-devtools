@@ -27,10 +27,9 @@ describe("withNextDevtools", () => {
 
 		expect(result.reactStrictMode).toBe(true);
 		expect(result.env).toMatchObject({ NEXT_DEVTOOLS: "1" });
-		expect(result.serverExternalPackages).toContain("@next-devtools/host-next");
-		expect(result.serverExternalPackages).toContain("@next-devtools/next");
+		expect(result.serverExternalPackages).toContain("next-devtools");
 		expect(result.instrumentationClientInject).toContain(
-			"@next-devtools/next/instrumentation-client",
+			"next-devtools/instrumentation-client",
 		);
 	});
 
@@ -72,7 +71,7 @@ describe("withNextDevtools", () => {
 
 		expect(result.instrumentationClientInject).toEqual([
 			"./my-client.js",
-			"@next-devtools/next/instrumentation-client",
+			"next-devtools/instrumentation-client",
 		]);
 	});
 
@@ -80,14 +79,14 @@ describe("withNextDevtools", () => {
 		const result = withNextDevtools(
 			{
 				instrumentationClientInject: [
-					"@next-devtools/next/instrumentation-client",
+					"next-devtools/instrumentation-client",
 				],
 			},
 			{ enabled: true },
 		);
 
 		expect(result.instrumentationClientInject).toEqual([
-			"@next-devtools/next/instrumentation-client",
+			"next-devtools/instrumentation-client",
 		]);
 	});
 

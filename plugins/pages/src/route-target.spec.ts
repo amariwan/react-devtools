@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveRouteTarget } from "./route-target";
+import { matchesRoutePattern, resolveRouteTarget } from "./route-target";
 
 describe("route target", () => {
 	it("resolves static pattern", () => {
@@ -33,5 +33,34 @@ describe("route target", () => {
 			fileRoles: [],
 		} as never;
 		expect(resolveRouteTarget(page, { id: "42" })).toBeNull();
+	});
+
+	it("matches a dynamic route without accepting extra segments", () => {
+		const page = {
+			urlPattern: "/dashboard/[id]",
+			dynamicParamNames: ["id"],
+			optionalParamNames: [],
+		} as never;
+		expect(matchesRoutePattern(page, "/dashboard/42")).toBe(true);
+		expect(matchesRoutePattern(page, "/dashboard/42/settings")).toBe(false);
+	});
+
+	it("matches catch-all and optional catch-all routes", () => {
+		const catchAll = {
+			urlPattern: "/docs/[...slug]",
+			dynamicParamNames: ["slug"],
+			optionalParamNames: [],
+		} as never;
+		const optionalCatchAll = {
+			urlPattern: "/docs/[[...slug]]",
+			dynamicParamNames: ["slug"],
+			optionalParamNames: ["slug"],
+		} as never;
+		expect(matchesRoutePattern(catchAll, "/docs/guide/setup")).toBe(true);
+		expect(matchesRoutePattern(catchAll, "/docs")).toBe(false);
+		expect(matchesRoutePattern(optionalCatchAll, "/docs")).toBe(true);
+		expect(matchesRoutePattern(optionalCatchAll, "/docs/guide/setup")).toBe(
+			true,
+		);
 	});
 });

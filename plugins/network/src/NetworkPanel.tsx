@@ -82,7 +82,6 @@ export default function NetworkPanel({
 		<div className="devtools:flex devtools:min-h-0 devtools:flex-col">
 			<PanelHeader
 				title="Network"
-				description="Resource timing metadata. Full request details remain in browser DevTools."
 				actions={
 					<Badge variant={data.recording ? "default" : "secondary"}>
 						{data.recording ? "Recording" : "Stopped"} · {data.count} requests
@@ -138,15 +137,25 @@ export default function NetworkPanel({
 					}
 				/>
 			) : (
-				<div className="devtools:overflow-auto">
-					<Table className="devtools:table-fixed devtools:min-w-[560px]">
+				<div className="devtools:overflow-auto devtools:@container">
+					<Table className="devtools:table-fixed devtools:min-w-[560px] devtools:@max-md:min-w-0">
 						<TableHeader>
 							<TableRow>
-								<TableHead className="devtools:w-[45%]">Request</TableHead>
-								<TableHead>Status</TableHead>
-								<TableHead>Type</TableHead>
-								<TableHead className="devtools:text-right">Duration</TableHead>
-								<TableHead className="devtools:text-right">Size</TableHead>
+								<TableHead className="devtools:h-8 devtools:px-2 devtools:w-[45%] devtools:@max-md:px-1 devtools:@max-md:w-[58%]">
+									Request
+								</TableHead>
+								<TableHead className="devtools:h-8 devtools:px-2 devtools:@max-md:w-[52px] devtools:@max-md:px-1">
+									Status
+								</TableHead>
+								<TableHead className="devtools:h-8 devtools:@max-md:hidden">
+									Type
+								</TableHead>
+								<TableHead className="devtools:h-8 devtools:px-2 devtools:whitespace-nowrap devtools:text-right devtools:@max-md:w-[72px] devtools:@max-md:px-1">
+									Duration
+								</TableHead>
+								<TableHead className="devtools:h-8 devtools:text-right devtools:@max-md:hidden">
+									Size
+								</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>

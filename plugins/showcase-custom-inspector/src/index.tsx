@@ -14,7 +14,7 @@ export const showcaseCustomPlugin: DevtoolsPlugin = {
 		ctx.panels.register({
 			id: "showcase-custom",
 			title: "Showcase Custom",
-			icon: "sparkles",
+			icon: "custom-inspector",
 			order: 99,
 			load: async () => {
 				const { default: Panel } = await import("./ShowcaseCustomPanel.js");

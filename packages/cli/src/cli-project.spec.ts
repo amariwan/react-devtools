@@ -14,7 +14,7 @@ async function createProject() {
 	await writeFile(
 		join(root, "package.json"),
 		JSON.stringify({
-			dependencies: { next: "16.0.0", "@next-devtools/next": "0.0.0" },
+			dependencies: { next: "16.0.0", "next-devtools": "0.0.0" },
 		}),
 	);
 	await mkdir(join(root, "src/app"), { recursive: true });

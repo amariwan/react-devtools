@@ -3,11 +3,15 @@ import type {
 	RuntimeServiceId,
 } from "@next-devtools/contracts";
 
+export type PanelCategory = "app" | "modules" | "advanced";
+
 export interface PanelDescriptor {
 	id: string;
 	title: string;
 	icon?: string;
 	order?: number;
+	/** Optional navigation group used by the reference-style shell settings. */
+	category?: PanelCategory;
 	load: () => Promise<unknown> | unknown;
 	when?: () => boolean;
 }

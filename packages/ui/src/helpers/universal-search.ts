@@ -38,7 +38,27 @@ function boundedEntries(
 	entries: UniversalSearchEntry[],
 	maxEntries: number,
 ): UniversalSearchEntry[] {
-	return entries.slice(0, Math.max(1, Math.min(500, maxEntries)));
+	const limit = Math.max(1, Math.min(500, maxEntries));
+	const groups = new Map<UniversalSearchKind, UniversalSearchEntry[]>();
+	for (const entry of entries) {
+		const group = groups.get(entry.kind) ?? [];
+		group.push(entry);
+		groups.set(entry.kind, group);
+	}
+
+	const bounded: UniversalSearchEntry[] = [];
+	for (let index = 0; bounded.length < limit; index++) {
+		let found = false;
+		for (const group of groups.values()) {
+			const entry = group[index];
+			if (!entry) continue;
+			bounded.push(entry);
+			found = true;
+			if (bounded.length === limit) break;
+		}
+		if (!found) break;
+	}
+	return bounded;
 }
 
 function addEntry(
@@ -60,20 +80,6 @@ export function buildUniversalSearchEntries(
 ): UniversalSearchEntry[] {
 	const entries: UniversalSearchEntry[] = [];
 
-	for (const node of snapshots.react?.tree ?? []) {
-		const value = record(node);
-		const id = text(value?.id);
-		const displayName = text(value?.displayName);
-		if (!id || !displayName) continue;
-		addEntry(entries, {
-			kind: "component",
-			id: `component:${id}`,
-			title: displayName,
-			subtitle: text(value?.kind),
-			panelId: "components",
-		});
-	}
-
 	for (const node of snapshots.routes?.tree?.nodes ?? []) {
 		const value = record(node);
 		const id = text(value?.id);
@@ -88,7 +94,7 @@ export function buildUniversalSearchEntries(
 		});
 	}
 
-	for (const event of snapshots.timeline?.events ?? []) {
+	for (const event of [...(snapshots.timeline?.events ?? [])].reverse()) {
 		const value = record(event);
 		const id = text(value?.id);
 		const layer = text(value?.layer);
@@ -100,6 +106,20 @@ export function buildUniversalSearchEntries(
 			title: `${layer} · ${type}`,
 			subtitle: text(value?.timestampUnixMs),
 			panelId: "timeline",
+		});
+	}
+
+	for (const node of snapshots.react?.tree ?? []) {
+		const value = record(node);
+		const id = text(value?.id);
+		const displayName = text(value?.displayName);
+		if (!id || !displayName) continue;
+		addEntry(entries, {
+			kind: "component",
+			id: `component:${id}`,
+			title: displayName,
+			subtitle: text(value?.kind),
+			panelId: "components",
 		});
 	}
 

@@ -235,7 +235,7 @@ describe("panel data selectors", () => {
 			],
 		});
 		expect(data.tailwindDetected).toBe(true);
-		expect(data.tokens).toContain("--color-primary");
+		expect(data.tokens.map((token) => token.name)).toContain("--color-primary");
 	});
 
 	it("zustand filters adapters", () => {

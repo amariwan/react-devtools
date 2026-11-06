@@ -24,7 +24,7 @@ verification.
 
 | Feature                                        | Implementation                                         | Test                        | Status |
 | ---------------------------------------------- | ------------------------------------------------------ | --------------------------- | ------ |
-| Single-package install (`@next-devtools/next`) | `packages/next` exports `withNextDevtools`             | config.test.ts              | PASS   |
+| Single-package install (`next-devtools`) | `packages/next` exports `withNextDevtools`             | config.test.ts              | PASS   |
 | `withNextDevtools()` config entry              | `packages/next/src/config.ts`                          | config.test.ts              | PASS   |
 | Dev-only activation                            | `enabled = NODE_ENV !== production && options.enabled` | config.test.ts              | PASS   |
 | Auto client mount                              | `instrumentation-client.tsx` guards                    | smoke.spec.ts               | PASS   |

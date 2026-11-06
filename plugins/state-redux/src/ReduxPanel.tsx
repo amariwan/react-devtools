@@ -46,9 +46,11 @@ export default function ReduxPanel({ registry }: { registry: PluginRegistry }) {
 		<div className="devtools:flex devtools:min-h-0 devtools:flex-col">
 			<PanelHeader
 				title="Redux"
-				description="Inspect registered store snapshots."
 				actions={
-					<Badge variant="secondary">{data.adapters.length} adapters</Badge>
+					<Badge variant="secondary">
+						{data.adapters.length}{" "}
+						{data.adapters.length === 1 ? "adapter" : "adapters"}
+					</Badge>
 				}
 			/>
 			{!data.hasStores ? (
@@ -56,8 +58,13 @@ export default function ReduxPanel({ registry }: { registry: PluginRegistry }) {
 					title="No Redux adapter connected"
 					description="Register a store adapter in your application to inspect live state."
 				/>
+			) : data.adapters.length === 0 ? (
+				<EmptyState
+					title="Redux store detected"
+					description="Register the store with a runtime adapter to inspect its state."
+				/>
 			) : (
-				<div className="devtools:p-3 devtools:space-y-3">
+				<div className="devtools:p-3">
 					<StoreInspector
 						adapters={data.adapters}
 						selectedAdapterId={snapshot?.data.selectedAdapterId}
@@ -72,12 +79,6 @@ export default function ReduxPanel({ registry }: { registry: PluginRegistry }) {
 							await service?.refresh();
 						}}
 					/>
-					{data.hasGlobalStore && data.adapters.length === 0 ? (
-						<p className="devtools:text-xs devtools:text-muted-foreground">
-							Global Redux store detected. Register an adapter to inspect its
-							state.
-						</p>
-					) : null}
 				</div>
 			)}
 		</div>

@@ -39,12 +39,12 @@ React DevTools tells you about components. Your browser tells you about requests
 ## Get started
 
 > [!NOTE]
-> The public package is being prepared for release. The package-install commands below describe the intended consumer experience once `@next-devtools/next` is published. To try the current source, use [Run from source](#run-from-source).
+> The public package is being prepared for release. The package-install commands below describe the intended consumer experience once `next-devtools` is published. To try the current source, use [Run from source](#run-from-source).
 
 ### 1. Install
 
 ```bash
-bun add -d @next-devtools/next
+bun add -d next-devtools
 ```
 
 ### 2. Configure once
@@ -53,7 +53,7 @@ In `next.config.ts`:
 
 ```ts
 import type { NextConfig } from "next";
-import { withNextDevtools } from "@next-devtools/next";
+import { withNextDevtools } from "next-devtools";
 
 const nextConfig: NextConfig = {
   // Your existing Next.js configuration
@@ -123,7 +123,7 @@ Network coverage is deliberately limited to browser-observable resource data. Se
 One developer-facing package, with focused internals:
 
 ```text
-@next-devtools/next               Public Next.js integration
+next-devtools                     Public Next.js integration
          |
          +-- Next.js configuration and development bootstrap
          +-- React runtime adapter and source inspection

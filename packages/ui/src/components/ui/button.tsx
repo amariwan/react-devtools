@@ -14,7 +14,7 @@ const buttonVariants = cva(
 				secondary:
 					"devtools:bg-secondary devtools:text-secondary-foreground devtools:hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] devtools:aria-expanded:bg-secondary devtools:aria-expanded:text-secondary-foreground",
 				ghost:
-					"devtools:hover:bg-muted devtools:hover:text-foreground devtools:aria-expanded:bg-muted devtools:aria-expanded:text-foreground devtools:dark:hover:bg-muted/50",
+					"devtools:text-foreground devtools:hover:bg-muted devtools:hover:text-foreground devtools:aria-expanded:bg-muted devtools:aria-expanded:text-foreground devtools:dark:hover:bg-muted/50",
 				destructive:
 					"devtools:bg-destructive/10 devtools:text-destructive devtools:hover:bg-destructive/20 devtools:focus-visible:border-destructive/40 devtools:focus-visible:ring-destructive/20 devtools:dark:bg-destructive/20 devtools:dark:hover:bg-destructive/30 devtools:dark:focus-visible:ring-destructive/40",
 				link: "devtools:text-primary devtools:underline-offset-4 devtools:hover:underline",

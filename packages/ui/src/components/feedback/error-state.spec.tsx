@@ -9,5 +9,6 @@ describe("ErrorState", () => {
 	it("renders title", () => {
 		render(<ErrorState title="boom" />);
 		expect(screen.getByText("boom")).toBeTruthy();
+		expect(screen.getByRole("alert").className).toContain("devtools:py-8");
 	});
 });

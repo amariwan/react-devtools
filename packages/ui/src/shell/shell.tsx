@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import type { PluginRegistry } from "@next-devtools/core";
-import { RUNTIME_SERVICE_IDS } from "@next-devtools/contracts";
+import {
+	RUNTIME_SERVICE_IDS,
+	type RuntimeServiceStatus,
+} from "@next-devtools/contracts";
 import type { PanelDescriptor } from "@next-devtools/plugin-sdk";
-import { MoonIcon, SearchIcon, SunIcon, XIcon } from "lucide-react";
-import { EmptyState, IconButton } from "../components/primitives";
+import { EmptyState } from "../components/primitives";
 import {
   defaultPrefs,
   loadPrefs,
@@ -14,6 +16,10 @@ import {
   type ShellPrefs,
   type ThemePref,
 } from "../helpers/prefs";
+import {
+	createPanelGroups,
+	flattenVisiblePanelGroups,
+} from "../helpers/panel-catalog";
 import {
   pickActivePanelId,
   resolveShellShortcut,
@@ -27,8 +33,10 @@ import { CommandPalette } from "./shell-command-palette";
 import { DevtoolsLauncher } from "./shell-launcher";
 import { Dock } from "./shell-dock";
 import { PanelRail } from "./shell-panel-rail";
+import { Sidebar, SidebarProvider } from "../components/ui/sidebar";
 import { PanelView } from "./shell-panel-view";
 import { SettingsView } from "./shell-settings";
+import { ShellMobileNavigation } from "./shell-mobile-navigation";
 
 export interface DevtoolsShellProps {
   registry: PluginRegistry;
@@ -159,9 +167,14 @@ export function DevtoolsShell({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, cmdOpen, settingsOpen]);
 
-  const visiblePanels = panels.filter(
-    (panel) => !prefs.hiddenPanels.includes(panel.id),
-  );
+  const panelGroups = React.useMemo(
+		() => createPanelGroups(panels, prefs),
+		[prefs, panels],
+	);
+  const visiblePanels = React.useMemo(
+		() => flattenVisiblePanelGroups(panelGroups, prefs.hiddenPanels),
+		[panelGroups, prefs.hiddenPanels],
+	);
 
   React.useEffect(() => {
     if (!open) return;
@@ -178,10 +191,15 @@ export function DevtoolsShell({
 
   const activePanel = visiblePanels.find((p) => p.id === activePanelId) ?? null;
   const commands = registry.commands.list();
-  const snapshotFor = (id: string): unknown =>
+	const snapshotFor = (id: string): unknown =>
     registry.services
       .get<{ getSnapshot(): { data: unknown } }>(id)
       ?.getSnapshot().data;
+	const reactServiceSnapshot = registry.services
+		.get<{
+			getSnapshot(): { data: unknown; status: RuntimeServiceStatus };
+		}>(RUNTIME_SERVICE_IDS.react)
+		?.getSnapshot();
   const reactSnapshot = snapshotFor(RUNTIME_SERVICE_IDS.react) as
     UniversalSearchSnapshots["react"] | undefined;
   const routeSnapshot = snapshotFor(RUNTIME_SERVICE_IDS.routes) as
@@ -261,26 +279,56 @@ export function DevtoolsShell({
         ref={setPortalContainer}
         data-devtools-ui=""
         data-theme={effectiveTheme}
+                style={{ zoom: prefs.uiScale }}
         className="devtools:font-sans devtools:text-sm devtools:text-foreground"
       >
-        {open ? (
-          <Dock position={prefs.dock}>
-            <ShellHeader
-              effectiveTheme={effectiveTheme}
-              onSearch={() => setCmdOpen(true)}
-              onThemeToggle={() =>
-                setTheme(effectiveTheme === "dark" ? "light" : "dark")
+		{open ? (
+						<Dock position={prefs.dock} size={prefs.dockSize}>
+							<ShellMobileNavigation
+								panels={visiblePanels}
+								activePanelId={activePanelId}
+								settingsOpen={settingsOpen}
+								onSelect={selectPanel}
+								onSettings={() => setSettingsOpen((value) => !value)}
+								onSearch={() => setCmdOpen(true)}
+								theme={effectiveTheme}
+								onThemeToggle={() =>
+									setTheme(effectiveTheme === "dark" ? "light" : "dark")
+								}
+							/>
+            <SidebarProvider
+              contained
+              open={prefs.expandSidebar}
+              onOpenChange={(next) =>
+                setPrefs((value) => ({ ...value, expandSidebar: next }))
               }
-              onClose={() => setOpen(false)}
-            />
-            <div className="devtools:flex devtools:min-h-0 devtools:flex-1">
-              <PanelRail
-                panels={visiblePanels}
-                activePanelId={activePanelId}
-                settingsOpen={settingsOpen}
-                onSelect={selectPanel}
-                onSettings={() => setSettingsOpen((value) => !value)}
-              />
+              className="devtools:min-h-0 devtools:flex-1"
+            >
+              <Sidebar
+                contained
+                collapsible="icon"
+                className="devtools:@max-[520px]/devtools:hidden"
+              >
+                <PanelRail
+                  panels={visiblePanels}
+                  activePanelId={activePanelId}
+                  settingsOpen={settingsOpen}
+                  scrollable={prefs.scrollableSidebar}
+                  connected={
+                    reactServiceSnapshot?.status === "available" ||
+                    reactServiceSnapshot?.status === "partial"
+                  }
+                  theme={effectiveTheme}
+                  onSelect={selectPanel}
+                  onSettings={() => setSettingsOpen((value) => !value)}
+                  onSearch={() => setCmdOpen(true)}
+                  onThemeToggle={() =>
+                    setTheme(effectiveTheme === "dark" ? "light" : "dark")
+                  }
+                  onRefresh={() => window.location.reload()}
+                  onClose={() => setOpen(false)}
+                />
+              </Sidebar>
               <main
                 id="devtools-panel-view"
                 role={settingsOpen ? "region" : "tabpanel"}
@@ -291,30 +339,96 @@ export function DevtoolsShell({
                     : undefined
                 }
                 tabIndex={0}
-                className="devtools:min-w-0 devtools:flex-1 devtools:overflow-auto"
+                className="devtools:min-w-0 devtools:flex-1 devtools:overflow-hidden"
               >
-                {settingsOpen ? (
-                  <SettingsView
-                    prefs={prefs}
-                    panels={panels}
-                    plugins={registeredPlugins}
-                    onThemeChange={setTheme}
-                    onDockChange={(dock) =>
-                      setPrefs((value) => ({ ...value, dock }))
-                    }
-                    onTogglePanel={togglePanel}
-                    onActivatePlugin={activatePlugin}
-                  />
-                ) : activePanel ? (
-                  <PanelView registry={registry} panel={activePanel} />
-                ) : (
-                  <EmptyState
-                    title="No panel selected"
-                    description="Choose a panel from the sidebar."
-                  />
-                )}
+                <div
+                  data-slot="panel-content"
+                  className="devtools:h-full devtools:min-w-0 devtools:overflow-auto"
+                >
+                  {settingsOpen ? (
+                    <SettingsView
+                      prefs={prefs}
+                      panels={panels}
+                      plugins={registeredPlugins}
+                      onThemeChange={setTheme}
+                      onDockChange={(dock) =>
+                        setPrefs((value) => ({ ...value, dock }))
+                      }
+                      onDockSizeChange={(dockSize) =>
+                        setPrefs((value) => ({ ...value, dockSize }))
+                      }
+                      onScaleChange={(uiScale) =>
+                        setPrefs((value) => ({ ...value, uiScale }))
+                      }
+						onToggleHighlightUpdates={() =>
+							setPrefs((value) => ({
+								...value,
+								highlightUpdates: !value.highlightUpdates,
+							}))
+						}
+                      onToggleSidebar={() =>
+                        setPrefs((value) => ({
+                          ...value,
+                          expandSidebar: !value.expandSidebar,
+                        }))
+                      }
+									onToggleScrollableSidebar={() =>
+										setPrefs((value) => ({
+											...value,
+											scrollableSidebar: !value.scrollableSidebar,
+										}))
+									}
+						onTogglePanelCategory={(category) =>
+							setPrefs((value) => ({
+								...value,
+								hiddenPanelCategories: value.hiddenPanelCategories.includes(category)
+									? value.hiddenPanelCategories.filter((item) => item !== category)
+									: [...value.hiddenPanelCategories, category],
+							}))
+						}
+						onTogglePinPanel={(id) =>
+							setPrefs((value) => ({
+								...value,
+								pinnedPanels: value.pinnedPanels.includes(id)
+									? value.pinnedPanels.filter((panelId) => panelId !== id)
+									: [...value.pinnedPanels, id],
+							}))
+						}
+						onMovePinnedPanel={(id, delta) =>
+							setPrefs((value) => {
+								const index = value.pinnedPanels.indexOf(id);
+								const nextIndex = index + delta;
+								if (
+									index < 0 ||
+									nextIndex < 0 ||
+									nextIndex >= value.pinnedPanels.length
+								)
+									return value;
+								const next = [...value.pinnedPanels];
+								next.splice(index, 1);
+								next.splice(nextIndex, 0, id);
+								return { ...value, pinnedPanels: next };
+							})
+						}
+									onResetSettings={() => setPrefs(defaultPrefs())}
+                      onTogglePanel={togglePanel}
+                      onActivatePlugin={activatePlugin}
+                    />
+                  ) : activePanel ? (
+						<PanelView
+							registry={registry}
+							panel={activePanel}
+							highlightUpdates={prefs.highlightUpdates}
+						/>
+                  ) : (
+                    <EmptyState
+                      title="No panel selected"
+                      description="Choose a panel from the sidebar."
+                    />
+                  )}
+                </div>
               </main>
-            </div>
+            </SidebarProvider>
           </Dock>
         ) : null}
         <DevtoolsLauncher
@@ -333,42 +447,5 @@ export function DevtoolsShell({
         ) : null}
       </div>
     </DevtoolsPortalContext.Provider>
-  );
-}
-
-function ShellHeader({
-  effectiveTheme,
-  onSearch,
-  onThemeToggle,
-  onClose,
-}: {
-  effectiveTheme: "light" | "dark";
-  onSearch: () => void;
-  onThemeToggle: () => void;
-  onClose: () => void;
-}) {
-  return (
-    <div className="devtools:flex devtools:shrink-0 devtools:items-center devtools:gap-2 devtools:border-b devtools:border-border devtools:bg-muted/40 devtools:px-3 devtools:py-2">
-      <span className="devtools:text-sm devtools:font-semibold devtools:tracking-tight devtools:text-foreground">
-        Next.js DevTools
-      </span>
-      <div className="devtools:ml-auto devtools:flex devtools:items-center devtools:gap-1">
-        <IconButton
-          icon={SearchIcon}
-          label="Search panels and commands"
-          onClick={onSearch}
-        />
-        <IconButton
-          icon={effectiveTheme === "dark" ? SunIcon : MoonIcon}
-          label={
-            effectiveTheme === "dark"
-              ? "Switch to light theme"
-              : "Switch to dark theme"
-          }
-          onClick={onThemeToggle}
-        />
-        <IconButton icon={XIcon} label="Close" onClick={onClose} />
-      </div>
-    </div>
   );
 }

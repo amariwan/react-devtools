@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { GraphFilters } from "./GraphFilters";
 
@@ -15,6 +15,17 @@ describe("GraphFilters", () => {
 				onEdgeKindsChange={() => undefined}
 			/>,
 		);
-		expect(container).toBeTruthy();
+		expect(
+			screen.getByRole("button", {
+				name: "Node type filters, 0 of 10 enabled",
+			}),
+		).toBeTruthy();
+		expect(
+			screen.getByRole("button", {
+				name: "Relationship filters, 0 of 5 enabled",
+			}),
+		).toBeTruthy();
+		expect(screen.getByText("0/10")).toBeTruthy();
+		expect(screen.getByText("0/5")).toBeTruthy();
 	});
 });

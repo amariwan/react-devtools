@@ -12,7 +12,7 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@next-devtools/next": "workspace:*",
+		"next-devtools": "workspace:*",
 		"commander": "^12.0.0"
 	},
 	"devDependencies": {},

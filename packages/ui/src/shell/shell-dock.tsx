@@ -1,17 +1,27 @@
 "use client";
 
 import * as React from "react";
-import type { DockPosition } from "../helpers/prefs";
+import { DEFAULT_DOCK_SIZE, type DockPosition } from "../helpers/prefs";
+import { cn } from "../lib/utils.js";
+
+const DOCK_ANIMATION_CLASS: Record<DockPosition, string> = {
+	bottom: "devtools:animate-devtools-dock-enter-bottom",
+	left: "devtools:animate-devtools-dock-enter-left",
+	right: "devtools:animate-devtools-dock-enter-right",
+};
 
 /** A bounded, resizable workspace; resizing never animates the inspected app. */
 export function Dock({
 	children,
 	position = "bottom",
+	size: sizeProp = DEFAULT_DOCK_SIZE,
 }: {
 	children: React.ReactNode;
 	position?: DockPosition;
+	/** Initial docked size as a percentage of the viewport. */
+	size?: number;
 }) {
-	const [size, setSize] = React.useState(72);
+	const [size, setSize] = React.useState(sizeProp);
 	const horizontal = position !== "bottom";
 	const drag = React.useRef<{ coordinate: number; size: number } | null>(null);
 	const clamp = (value: number) => Math.max(35, Math.min(94, value));
@@ -25,18 +35,22 @@ export function Dock({
 					? {
 							top: "0.5rem",
 							[position]: "0.5rem",
-							width: `min(${size}vw, calc(100vw - 1rem))`,
+							width: `70%`,
 						}
 					: {
-							left: "0.5rem",
-							right: "0.5rem",
+							width: "70%",
 							height: `min(${size}dvh, calc(100dvh - 3rem))`,
 						}),
-				minWidth: "min(320px, calc(100vw - 1rem))",
+				minWidth: "min(280px, calc(100vw - 1rem))",
 				maxHeight: "calc(100dvh - 3rem)",
 				boxShadow: "var(--shadow-lg)",
 			}}
-			className="devtools-dock devtools:fixed devtools:z-[2147483646] devtools:flex devtools:flex-col devtools:overflow-hidden devtools:rounded-lg devtools:border devtools:border-border devtools:bg-background devtools:text-foreground"
+			className={cn(
+				!horizontal && "devtools:left-2 devtools:right-2 devtools:mx-auto",
+				"devtools:origin-center",
+				DOCK_ANIMATION_CLASS[position],
+				"devtools:@container/devtools devtools:fixed devtools:z-[2147483646] devtools:flex devtools:flex-col devtools:overflow-hidden devtools:rounded-lg devtools:border devtools:border-border devtools:bg-background devtools:text-foreground",
+			)}
 		>
 			<div
 				role="separator"

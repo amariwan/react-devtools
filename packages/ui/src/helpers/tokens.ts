@@ -1,10 +1,7 @@
 /**
- * Design tokens for the DevTools shell and plugins.
- *
- * Single source of truth for color, geometry, typography, and status values.
- * Values are derived from `docs/superpowers/specs/2026-10-26-vue-devtools-parity-design.md`
- * (token table) and `docs/DESIGN.md` (status colors). Keep both documents in sync
- * when these values change.
+ * Public design token values for the DevTools shell and plugin integrations.
+ * Semantic CSS tokens are declared in `packages/ui/src/css/devtools.css`; keep
+ * theme colors synchronized with that stylesheet. See `docs/DESIGN.md`.
  */
 
 export type Theme = "light" | "dark";
@@ -47,8 +44,8 @@ export const LIGHT_COLORS: Readonly<ColorTokens> = {
 	muted: "#52525b",
 	border: "rgba(82,82,91,0.18)",
 	hover: "rgba(82,82,91,0.08)",
-	accent: "#2563eb",
-	accentSelected: "#2563eb",
+	accent: "#00704f",
+	accentSelected: "#00704f",
 	onAccent: "#ffffff",
 	success: "#16a34a",
 	warning: "#d97706",
@@ -63,8 +60,8 @@ export const DARK_COLORS: Readonly<ColorTokens> = {
 	muted: "#a1a1aa",
 	border: "rgba(161,161,170,0.18)",
 	hover: "rgba(161,161,170,0.10)",
-	accent: "#60a5fa",
-	accentSelected: "#2563eb",
+	accent: "#42c99c",
+	accentSelected: "#00704f",
 	onAccent: "#ffffff",
 	success: "#4ade80",
 	warning: "#fbbf24",

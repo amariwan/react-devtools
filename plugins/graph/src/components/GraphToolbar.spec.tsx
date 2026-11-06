@@ -1,13 +1,13 @@
 /**
  * @vitest-environment jsdom
  */
-import { render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { GraphToolbar } from "./GraphToolbar";
 
 describe("GraphToolbar", () => {
-	it("renders", () => {
-		const { container } = render(
+	it("renders view options in an accessible popover", () => {
+		render(
 			<GraphToolbar
 				query=""
 				onQueryChange={() => undefined}
@@ -25,8 +25,21 @@ describe("GraphToolbar", () => {
 				onFocus={() => undefined}
 				onExport={() => undefined}
 				onToggleFullscreen={() => undefined}
+				fullscreen={false}
+				onOpenSettings={() => undefined}
+				loading={false}
+				nodeCount={3}
 			/>,
 		);
-		expect(container).toBeTruthy();
+		const viewOptions = screen.getByRole("button", { name: "View options" });
+		expect(viewOptions.getAttribute("aria-haspopup")).toBe("dialog");
+		fireEvent.click(viewOptions);
+		expect(viewOptions.getAttribute("aria-expanded")).toBe("true");
+		expect(
+			screen.getByRole("group", { name: "Graph view actions" }),
+		).toBeTruthy();
+		expect(
+			screen.getByRole("button", { name: "Run graph layout" }),
+		).toBeTruthy();
 	});
 });

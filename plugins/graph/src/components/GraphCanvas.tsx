@@ -1,4 +1,4 @@
-import type * as React from "react";
+import * as React from "react";
 import type { CytoscapeController } from "../hooks/useCytoscape.js";
 import type { GraphView } from "../lib/graph-model.js";
 import { EVIDENCE_META, NODE_KIND_META } from "../lib/graph-model.js";
@@ -9,9 +9,8 @@ export interface GraphCanvasProps {
 	readonly theme: GraphTheme;
 	readonly view: GraphView;
 	readonly containerRef: React.RefObject<HTMLDivElement | null>;
+	readonly selectedNodeId: string | null;
 	readonly onNodeSelect: (id: string) => void;
-	readonly onBackgroundSelect: () => void;
-	readonly height?: number;
 	readonly accessible?: boolean;
 }
 
@@ -25,85 +24,66 @@ export function GraphCanvas({
 	theme,
 	view,
 	containerRef,
-	height = 460,
+	selectedNodeId,
+	onNodeSelect,
 	accessible = true,
 }: GraphCanvasProps) {
+	const accessibleListRef = React.useRef<HTMLDetailsElement | null>(null);
+	const selectAccessibleNode = (id: string) => {
+		onNodeSelect(id);
+		controller.zoomTo(id);
+		const details = accessibleListRef.current;
+		if (!details) return;
+		details.open = false;
+		details.querySelector("summary")?.focus();
+	};
+
 	return (
-		<div
-			className="graph-canvas-shell"
-			style={{ position: "relative", height }}
-		>
+		<div className="graph-canvas-shell devtools:relative devtools:size-full devtools:min-h-0 devtools:flex-[1_1_auto]">
 			<div
 				ref={containerRef}
 				role="img"
+				data-layout-state={
+					controller.layoutPending
+						? "running"
+						: controller.layoutDurationMs === null
+							? "idle"
+							: "complete"
+				}
+				data-layout-duration-ms={controller.layoutDurationMs ?? undefined}
 				aria-label={`Reactive dependency graph for ${view.rootLabel ?? "selected component"}. ${view.nodeCount} nodes, ${view.edgeCount} edges.`}
-				style={{
-					width: "100%",
-					height: "100%",
-					background: theme.background,
-					borderRadius: 8,
-					overflow: "hidden",
-					cursor: "grab",
-				}}
+				className="devtools:size-full devtools:overflow-hidden devtools:rounded-md devtools:cursor-grab"
+				style={{ background: theme.background }}
 			/>
 			{!controller.ready ? (
-				<div
-					style={{
-						position: "absolute",
-						inset: 0,
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						color: theme.muted,
-						fontSize: 12,
-						pointerEvents: "none",
-					}}
-				>
+				<div className="devtools:pointer-events-none devtools:absolute devtools:inset-0 devtools:flex devtools:items-center devtools:justify-center devtools:text-xs devtools:text-muted-foreground">
 					Initializing graph…
+				</div>
+			) : null}
+			{controller.layoutPending ? (
+				<div
+					role="status"
+					className="devtools:pointer-events-none devtools:absolute devtools:right-2 devtools:top-2 devtools:rounded-md devtools:border devtools:border-border devtools:bg-card/95 devtools:px-2 devtools:py-1 devtools:text-xs devtools:text-muted-foreground"
+				>
+					Arranging graph…
 				</div>
 			) : null}
 			{accessible ? (
 				<details
-					style={{
-						position: "absolute",
-						bottom: 8,
-						left: 8,
-						background: theme.surface,
-						border: `1px solid ${theme.border}`,
-						borderRadius: 6,
-						padding: "4px 8px",
-						fontSize: 11,
-						color: theme.muted,
-						maxWidth: 260,
-					}}
+					ref={accessibleListRef}
+					className="devtools:absolute devtools:bottom-2 devtools:left-2 devtools:max-w-[260px] devtools:rounded-md devtools:border devtools:border-border devtools:bg-card devtools:px-2 devtools:py-1 devtools:text-xs devtools:text-muted-foreground"
 				>
-					<summary style={{ cursor: "pointer", fontWeight: 500 }}>
+					<summary className="devtools:cursor-pointer devtools:font-medium">
 						Accessible node list
 					</summary>
-					<div
-						style={{
-							marginTop: 6,
-							maxHeight: 180,
-							overflow: "auto",
-							display: "flex",
-							flexDirection: "column",
-							gap: 2,
-						}}
-					>
+					<div className="devtools:mt-1.5 devtools:flex devtools:max-h-[180px] devtools:flex-col devtools:gap-0.5 devtools:overflow-auto">
 						{view.nodes.map((node) => (
 							<button
 								key={node.id}
 								type="button"
-								onClick={() => controller.zoomTo(node.id)}
-								style={{
-									textAlign: "left",
-									background: "transparent",
-									border: "none",
-									color: theme.text,
-									fontSize: 11,
-									cursor: "pointer",
-									padding: "2px 0",
-								}}
+								aria-pressed={node.id === selectedNodeId}
+								onClick={() => selectAccessibleNode(node.id)}
+								className="devtools:cursor-pointer devtools:bg-transparent devtools:py-0.5 devtools:text-left devtools:text-xs devtools:text-foreground devtools:hover:text-primary devtools:focus-visible:outline-none devtools:focus-visible:underline"
 							>
 								{node.label} · {NODE_KIND_META[node.kind].label} ·{" "}
 								{EVIDENCE_META[node.evidence].label}

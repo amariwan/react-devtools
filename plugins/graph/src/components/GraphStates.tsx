@@ -1,4 +1,4 @@
-import { EmptyState, ErrorState } from "@next-devtools/ui";
+import { Button, EmptyState, ErrorState } from "@next-devtools/ui";
 import type { GraphView } from "../lib/graph-model.js";
 import { describeEmptyReason } from "../lib/graph-transform.js";
 
@@ -12,6 +12,7 @@ export interface GraphStatesProps {
 	readonly onReload: () => void;
 	readonly onResetFilters: () => void;
 	readonly hiddenByKind: number;
+	readonly compact?: boolean;
 }
 
 export function GraphStates({
@@ -24,6 +25,7 @@ export function GraphStates({
 	onReload,
 	onResetFilters,
 	hiddenByKind,
+	compact = false,
 }: GraphStatesProps) {
 	if (loading) {
 		return (
@@ -67,32 +69,48 @@ export function GraphStates({
 	}
 
 	if (view.status === "empty") {
+		if (!view.rootComponentId) {
+			return (
+				<EmptyState
+					title="Select a component"
+					description="Choose one in the Components panel to inspect its dependencies."
+				/>
+			);
+		}
+
 		const reason = describeEmptyReason(view, {
 			runtimeStatus,
 			dependenciesCapable,
 			dependencySetLoaded,
 			hiddenByKind,
 		});
+		if (compact) {
+			return (
+				<div
+					role="status"
+					className="devtools:flex devtools:flex-wrap devtools:justify-center devtools:gap-2 devtools:px-3 devtools:py-2 devtools:text-center devtools:text-xs devtools:leading-relaxed devtools:text-muted-foreground"
+				>
+					<strong className="devtools:font-medium devtools:text-foreground">
+						No reactive dependencies
+					</strong>
+					<span>{reason}</span>
+				</div>
+			);
+		}
 		return (
 			<EmptyState
 				title="No reactive dependencies"
 				description={reason}
 				action={
 					hiddenByKind > 0 ? (
-						<button
+						<Button
 							type="button"
+							variant="outline"
+							size="xs"
 							onClick={onResetFilters}
-							style={{
-								padding: "4px 10px",
-								borderRadius: 6,
-								border: "1px solid var(--border, rgba(127,127,127,0.25))",
-								background: "transparent",
-								cursor: "pointer",
-								fontSize: 12,
-							}}
 						>
 							Reset filters
-						</button>
+						</Button>
 					) : undefined
 				}
 			/>

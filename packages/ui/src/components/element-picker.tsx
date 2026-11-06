@@ -2,6 +2,7 @@
 
 import { resolveElementSource } from "@next-devtools/source-inspector";
 import type { ResolvedElementSource } from "@next-devtools/source-inspector";
+import { ChevronUp } from "lucide-react";
 import * as React from "react";
 
 export interface PickedElement {
@@ -73,16 +74,12 @@ export function ElementHighlight({ element }: { element: HTMLElement | null }) {
 		<div
 			data-next-devtools-highlight="selected"
 			aria-hidden
+			className="devtools:fixed devtools:pointer-events-none devtools:border-2 devtools:border-primary devtools:bg-primary/10 devtools:z-[2147483645]"
 			style={{
-				position: "fixed",
 				top: rect.top,
 				left: rect.left,
 				width: rect.width,
 				height: rect.height,
-				border: "2px solid #2563eb",
-				background: "rgba(37,99,235,0.10)",
-				pointerEvents: "none",
-				zIndex: 2147483645,
 			}}
 		/>
 	);
@@ -180,36 +177,24 @@ export function ElementPicker({
 		<>
 			<div
 				aria-hidden
+				className="devtools:fixed devtools:pointer-events-none devtools:border-2 devtools:border-primary devtools:bg-primary/10 devtools:z-[2147483646]"
 				style={{
-					position: "fixed",
 					top: rect.top,
 					left: rect.left,
 					width: rect.width,
 					height: rect.height,
-					border: "2px solid #ff4757",
-					background: "rgba(255,71,87,0.12)",
-					pointerEvents: "none",
-					zIndex: 2147483646,
 				}}
 			/>
 			<div
+				className="devtools:fixed devtools:pointer-events-auto devtools:z-[2147483647] devtools:max-w-[400px] devtools:rounded-md devtools:border devtools:border-border devtools:bg-popover devtools:px-2.5 devtools:py-1.5 devtools:text-xs devtools:text-popover-foreground devtools:shadow-md"
 				style={{
-					position: "fixed",
 					top: Math.max(8, rect.top - 60),
 					left: rect.left,
-					background: "rgba(0,0,0,0.85)",
-					color: "#fff",
-					padding: "6px 10px",
-					borderRadius: 6,
-					fontSize: 12,
-					zIndex: 2147483647,
-					maxWidth: 400,
-					pointerEvents: "none",
 				}}
 			>
-				<div style={{ fontWeight: 600 }}>{compName}</div>
+				<div className="devtools:font-semibold">{compName}</div>
 				{file && (
-					<div style={{ fontSize: 11, opacity: 0.8 }}>
+					<div className="devtools:break-all devtools:text-[11px] devtools:text-muted-foreground">
 						{file}
 						{line ? `:${line}${col ? `:${col}` : ""}` : ""}
 					</div>
@@ -218,19 +203,10 @@ export function ElementPicker({
 					<button
 						type="button"
 						onClick={cycleParent}
-						style={{
-							marginTop: 4,
-							fontSize: 10,
-							opacity: 0.85,
-							background: "transparent",
-							border: "1px solid rgba(255,255,255,0.4)",
-							color: "#fff",
-							borderRadius: 4,
-							padding: "1px 6px",
-							cursor: "pointer",
-						}}
+						className="devtools:mt-1 devtools:inline-flex devtools:items-center devtools:gap-1 devtools:rounded-sm devtools:border devtools:border-border devtools:bg-secondary devtools:px-1.5 devtools:py-0.5 devtools:text-[10px] devtools:text-secondary-foreground devtools:hover:bg-accent devtools:focus-visible:outline-none devtools:focus-visible:ring-2 devtools:focus-visible:ring-ring"
 					>
-						Parent: {parents[parentIdx]?.name ?? "—"} (click to walk up)
+						<ChevronUp aria-hidden className="devtools:size-3" />
+						Parent: {parents[parentIdx]?.name ?? "—"}
 					</button>
 				)}
 			</div>

@@ -8,18 +8,21 @@ import { useDebugSessions } from "./use-debug-sessions";
 describe("use debug sessions", () => {
 	it("initializes", () => {
 		const store: Record<string, string> = {};
-		(window as unknown as { localStorage: Storage }).localStorage = {
-			getItem: (k: string) => store[k] ?? null,
-			setItem: (k: string, v: string) => {
-				store[k] = v;
+		Object.defineProperty(window, "localStorage", {
+			configurable: true,
+			value: {
+				getItem: (k: string) => store[k] ?? null,
+				setItem: (k: string, v: string) => {
+					store[k] = v;
+				},
+				removeItem: (k: string) => {
+					delete store[k];
+				},
+				clear: () => {},
+				key: () => null,
+				length: 0,
 			},
-			removeItem: (k: string) => {
-				delete store[k];
-			},
-			clear: () => {},
-			key: () => null,
-			length: 0,
-		};
+		});
 		const registry = {
 			services: { get: () => undefined },
 			list: () => [],

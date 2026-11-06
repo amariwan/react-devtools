@@ -105,11 +105,11 @@ export function CommandPalette({
 			}}
 		>
 			<Dialog.Portal container={container}>
-				<Dialog.Backdrop className="devtools:fixed devtools:inset-0 devtools:z-[2147483647] devtools:bg-black/40" />
+				<Dialog.Backdrop className="devtools:animate-devtools-backdrop-enter devtools:fixed devtools:inset-0 devtools:z-[2147483647] devtools:bg-black/40" />
 				<Dialog.Popup
 					initialFocus={inputRef}
 					aria-label="Command palette"
-					className="devtools:fixed devtools:top-[12dvh] devtools:left-1/2 devtools:z-[2147483647] devtools:w-[560px] devtools:max-w-[calc(100vw-2rem)] devtools:-translate-x-1/2 devtools:overflow-hidden devtools:rounded-lg devtools:border devtools:border-border devtools:bg-popover devtools:text-popover-foreground devtools:shadow-xl"
+					className="devtools:animate-devtools-popover-enter devtools:origin-top devtools:fixed devtools:top-[12dvh] devtools:left-1/2 devtools:z-[2147483647] devtools:w-[560px] devtools:max-w-[calc(100vw-2rem)] devtools:-translate-x-1/2 devtools:overflow-hidden devtools:rounded-lg devtools:border devtools:border-border devtools:bg-popover devtools:text-popover-foreground devtools:shadow-xl"
 				>
 					<Dialog.Title className="devtools:sr-only">
 						Search DevTools

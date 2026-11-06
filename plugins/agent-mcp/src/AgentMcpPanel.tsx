@@ -3,7 +3,10 @@ import type { PluginRegistry } from "@next-devtools/core";
 import type { DiagnosticsRuntime } from "@next-devtools/core";
 import {
 	Badge,
+	CircleCheck,
 	EmptyState,
+	IconButton,
+	Info,
 	PanelHeader,
 	Table,
 	TableBody,
@@ -11,6 +14,7 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
+	Workflow,
 } from "@next-devtools/ui";
 import * as React from "react";
 import { buildAgentMcpHealthData } from "./agent-mcp-data.js";
@@ -52,19 +56,27 @@ export default function AgentMcpPanel({
 		RUNTIME_SERVICE_IDS.diagnostics,
 	);
 	const diagnosticEvents = diagnostics?.getSnapshot().data.events ?? [];
+	const availableServiceCount = data.services.filter(
+		(service) => service.status === "available",
+	).length;
 	return (
 		<div className="devtools:flex devtools:min-h-0 devtools:flex-col">
 			<PanelHeader
 				title="Agent / MCP"
-				description="Read-only runtime diagnostics. MCP transport is not enabled by this panel."
+				description="Read-only diagnostics."
 				actions={
-					<Badge variant="secondary">
-						{
-							data.services.filter((service) => service.status === "available")
-								.length
-						}{" "}
-						services available
-					</Badge>
+					<>
+						<Badge variant="secondary">
+							<Workflow aria-hidden="true" className="devtools:size-3" />
+							{availableServiceCount}
+							<span className="devtools:sr-only"> services available</span>
+						</Badge>
+						<IconButton
+							icon={Info}
+							label="MCP transport is not enabled by this panel."
+							size="icon-xs"
+						/>
+					</>
 				}
 			/>
 			<section
@@ -80,8 +92,11 @@ export default function AgentMcpPanel({
 				</h3>
 				{diagnosticEvents.length === 0 ? (
 					<EmptyState
-						title="No errors captured"
-						description="Browser errors and unhandled rejections will appear here."
+						icon={CircleCheck}
+						compact
+						layout="inline"
+						title="No errors"
+						description="Browser errors and unhandled rejections appear here."
 					/>
 				) : (
 					<ul className="devtools:m-0 devtools:list-none devtools:divide-y devtools:divide-border devtools:p-0">
@@ -122,7 +137,26 @@ export default function AgentMcpPanel({
 				>
 					Runtime services
 				</h3>
-				<div className="devtools:overflow-auto">
+				<CompactStatusList
+					label="Runtime service status"
+					rows={data.services.map((service) => ({
+						id: service.id,
+						displayId: service.id.startsWith("next-devtools.runtime.")
+							? service.id.slice("next-devtools.runtime.".length)
+							: service.id,
+						status: service.status,
+						details:
+							[
+								service.reason,
+								service.droppedEvents !== undefined
+									? `${service.droppedEvents} dropped`
+									: undefined,
+							]
+								.filter(Boolean)
+								.join(" · ") || undefined,
+					}))}
+				/>
+				<div className="devtools:@max-[760px]/devtools:hidden">
 					<Table>
 						<TableHeader>
 							<TableRow>
@@ -134,10 +168,10 @@ export default function AgentMcpPanel({
 						<TableBody>
 							{data.services.map((service) => (
 								<TableRow key={service.id}>
-									<TableCell className="devtools:font-mono devtools:text-xs">
+									<TableCell className="devtools:whitespace-nowrap devtools:font-mono devtools:text-xs">
 										{service.id}
 									</TableCell>
-									<TableCell>
+									<TableCell className="devtools:whitespace-nowrap">
 										<Badge
 											variant={
 												service.status === "error" ? "destructive" : "outline"
@@ -165,7 +199,15 @@ export default function AgentMcpPanel({
 				>
 					Plugins <Badge variant="outline">{data.plugins.length}</Badge>
 				</h3>
-				<div className="devtools:overflow-auto">
+				<CompactStatusList
+					label="Plugin status"
+					rows={data.plugins.map((plugin) => ({
+						id: plugin.id,
+						status: plugin.status,
+						details: plugin.reason,
+					}))}
+				/>
+				<div className="devtools:@max-[760px]/devtools:hidden">
 					<Table>
 						<TableHeader>
 							<TableRow>
@@ -177,10 +219,10 @@ export default function AgentMcpPanel({
 						<TableBody>
 							{data.plugins.map((plugin) => (
 								<TableRow key={plugin.id}>
-									<TableCell className="devtools:font-mono devtools:text-xs">
+									<TableCell className="devtools:whitespace-nowrap devtools:font-mono devtools:text-xs">
 										{plugin.id}
 									</TableCell>
-									<TableCell>
+									<TableCell className="devtools:whitespace-nowrap">
 										<Badge variant="outline">{plugin.status}</Badge>
 									</TableCell>
 									<TableCell className="devtools:text-xs devtools:text-muted-foreground">
@@ -216,5 +258,64 @@ export default function AgentMcpPanel({
 				</p>
 			</section>
 		</div>
+	);
+}
+
+type CompactStatusRow = {
+	readonly id: string;
+	readonly displayId?: string;
+	readonly status: string;
+	readonly details?: string | undefined;
+};
+
+function CompactStatusList({
+	label,
+	rows,
+}: {
+	label: string;
+	rows: readonly CompactStatusRow[];
+}) {
+	return (
+		<ul
+			aria-label={label}
+			className="devtools:m-0 devtools:hidden devtools:list-none devtools:divide-y devtools:divide-border devtools:p-0 devtools:@max-[760px]/devtools:block"
+		>
+			{rows.map((row) => (
+				<li
+					key={row.id}
+					className="devtools:grid devtools:gap-1.5 devtools:px-3 devtools:py-2"
+				>
+					<div className="devtools:flex devtools:min-w-0 devtools:items-center devtools:justify-between devtools:gap-2">
+						<code
+							title={row.id}
+							className="devtools:min-w-0 devtools:break-all devtools:text-[11px]"
+						>
+							{row.displayId ? (
+								<>
+									<span aria-hidden="true">{row.displayId}</span>
+									<span className="devtools:sr-only">{row.id}</span>
+								</>
+							) : (
+								row.id
+							)}
+						</code>
+						<Badge
+							variant={
+								row.status === "error" || row.status === "failed"
+									? "destructive"
+									: "outline"
+							}
+						>
+							{row.status}
+						</Badge>
+					</div>
+					{row.details && (
+						<p className="devtools:m-0 devtools:text-[11px] devtools:text-muted-foreground">
+							{row.details}
+						</p>
+					)}
+				</li>
+			))}
+		</ul>
 	);
 }

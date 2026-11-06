@@ -1,9 +1,8 @@
 # Publishing
 
-`@next-devtools/next` is the public entry package. Runtime dependencies that
-must be resolved by consumers are public workspace packages and are included in
-the Changesets release graph. `.changeset/config.json` and
-`.changeset/public-runtime-packages.md` define the release policy.
+`next-devtools` is the only public package. Internal workspace packages are
+compiled into its `dist/vendor` directory and are not installed separately by
+consumers.
 
 The repository and workspace packages use the MIT License, copyright (c) 2026
 Aland Baban. Every workspace `package.json` declares `"license": "MIT"`, and
@@ -31,5 +30,5 @@ correct invocation, rejects unresolved `workspace:*` dependencies, and checks
 that source files, `tsconfig.json`, and compiled tests are not shipped. The
 compatibility suite also installs the archive and its internal closure from an
 isolated local file mirror, resolves external dependencies normally, and imports
-`@next-devtools/next`. A hosted registry install and CI release rehearsal remain
+`next-devtools`. A hosted registry install and CI release rehearsal remain
 separate checks.

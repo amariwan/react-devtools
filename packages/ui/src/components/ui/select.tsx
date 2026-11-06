@@ -5,6 +5,7 @@ import { cn } from "../../lib/utils";
 export interface SelectOption {
 	value: string;
 	label: string;
+	disabled?: boolean;
 }
 
 export interface SelectProps
@@ -38,7 +39,7 @@ function Select({
 				className="devtools:h-8 devtools:w-full devtools:appearance-none devtools:rounded-md devtools:border devtools:border-input devtools:bg-transparent devtools:pr-7 devtools:pl-2.5 devtools:text-sm devtools:outline-none devtools:focus-visible:border-ring devtools:focus-visible:ring-3 devtools:focus-visible:ring-ring/50 devtools:dark:bg-input/30"
 			>
 				{options.map((o) => (
-					<option key={o.value} value={o.value}>
+					<option key={o.value} value={o.value} disabled={o.disabled}>
 						{o.label}
 					</option>
 				))}

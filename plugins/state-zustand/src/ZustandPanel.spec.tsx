@@ -1,9 +1,11 @@
 /**
  * @vitest-environment jsdom
  */
-import { render } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import ZustandPanel from "./ZustandPanel";
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe("ZustandPanel", () => {
 	it("renders", () => {
@@ -25,5 +27,19 @@ describe("ZustandPanel", () => {
 		} as never;
 		const { container } = render(<ZustandPanel registry={registry} />);
 		expect(container).toBeTruthy();
+	});
+
+	it("explains detected globals when no adapter is registered", () => {
+		vi.stubGlobal("__ZUSTAND_STORES__", [{ id: "global-store" }]);
+		render(
+			<ZustandPanel
+				registry={{ services: { get: () => undefined } } as never}
+			/>,
+		);
+
+		expect(screen.getByText("Zustand store detected")).toBeTruthy();
+		expect(
+			screen.queryByRole("combobox", { name: "Store adapter" }),
+		).toBeNull();
 	});
 });

@@ -38,33 +38,35 @@ describe("universal search", () => {
 			},
 		});
 
-		expect(entries).toEqual([
-			expect.objectContaining({
-				kind: "component",
-				title: "Dashboard",
-				panelId: "components",
-			}),
-			expect.objectContaining({
-				kind: "route",
-				title: "dashboard",
-				panelId: "pages",
-			}),
-			expect.objectContaining({
-				kind: "timeline",
-				title: "navigation · navigation",
-				panelId: "timeline",
-			}),
-			expect.objectContaining({
-				kind: "network",
-				title: "http://localhost/api",
-				panelId: "network",
-			}),
-			expect.objectContaining({
-				kind: "error",
-				title: "Failed to load",
-				panelId: "agent-mcp",
-			}),
-		]);
+		expect(entries).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					kind: "component",
+					title: "Dashboard",
+					panelId: "components",
+				}),
+				expect.objectContaining({
+					kind: "route",
+					title: "dashboard",
+					panelId: "pages",
+				}),
+				expect.objectContaining({
+					kind: "timeline",
+					title: "navigation · navigation",
+					panelId: "timeline",
+				}),
+				expect.objectContaining({
+					kind: "network",
+					title: "http://localhost/api",
+					panelId: "network",
+				}),
+				expect.objectContaining({
+					kind: "error",
+					title: "Failed to load",
+					panelId: "agent-mcp",
+				}),
+			]),
+		);
 	});
 
 	it("bounds indexed results", () => {

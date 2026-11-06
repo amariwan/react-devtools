@@ -9,7 +9,9 @@ import { Input } from "./input";
 describe("Input", () => {
 	it("renders", () => {
 		render(<Input placeholder="x" />);
-		expect(screen.getByPlaceholderText("x")).toBeTruthy();
+		const input = screen.getByPlaceholderText("x");
+		expect(input).toBeTruthy();
+		expect(input.className).toContain("devtools:text-foreground");
 	});
 
 	it("accepts input", async () => {

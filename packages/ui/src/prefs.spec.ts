@@ -23,7 +23,14 @@ describe("prefs defaults and validation", () => {
 		expect(defaultPrefs()).toEqual({
 			theme: "system",
 			dock: "bottom",
+			dockSize: 80,
+			expandSidebar: false,
+			scrollableSidebar: true,
+			uiScale: 1,
 			hiddenPanels: [],
+			hiddenPanelCategories: [],
+			pinnedPanels: [],
+			highlightUpdates: false,
 		});
 	});
 
@@ -49,13 +56,24 @@ describe("loadPrefs", () => {
 			[PREFS_STORAGE_KEY]: JSON.stringify({
 				theme: "dark",
 				dock: "right",
+				dockSize: 55,
+				expandSidebar: true,
+				scrollableSidebar: false,
+				uiScale: 1,
 				hiddenPanels: ["graph", "network"],
 			}),
 		});
 		expect(loadPrefs(storage)).toEqual({
 			theme: "dark",
 			dock: "right",
+			dockSize: 55,
+			expandSidebar: true,
+			scrollableSidebar: false,
+			uiScale: 1,
 			hiddenPanels: ["graph", "network"],
+			hiddenPanelCategories: [],
+			pinnedPanels: [],
+			highlightUpdates: false,
 		});
 	});
 
@@ -81,7 +99,14 @@ describe("savePrefs", () => {
 		const prefs: ShellPrefs = {
 			theme: "light",
 			dock: "left",
+			dockSize: 80,
+			expandSidebar: true,
+			scrollableSidebar: false,
+			uiScale: 1,
 			hiddenPanels: ["agent-mcp"],
+			hiddenPanelCategories: [],
+			pinnedPanels: [],
+			highlightUpdates: false,
 		};
 		savePrefs(storage, prefs);
 		expect(loadPrefs(storage)).toEqual(prefs);

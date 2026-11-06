@@ -1,4 +1,9 @@
-import { Badge, Button, Input } from "@next-devtools/ui";
+import {
+	CircleCheck,
+	ExternalLink,
+	IconButton,
+	Input,
+} from "@next-devtools/ui";
 import type { PageRow } from "../pages-data.js";
 import { resolveRouteTarget } from "../route-target.js";
 
@@ -22,37 +27,18 @@ export function RouteRow({
 	return (
 		<li
 			aria-current={active ? "page" : undefined}
-			style={{
-				background: active ? "var(--accent)" : "var(--card)",
-				fontSize: 12,
-				padding: "6px 8px",
-				border: "1px solid var(--border, #e4e4e7)",
-				borderRadius: 4,
-				display: "flex",
-				justifyContent: "space-between",
-				flexWrap: "wrap",
-				alignItems: "center",
-				gap: 8,
-			}}
+			className={`devtools:flex devtools:flex-wrap devtools:items-center devtools:justify-between devtools:gap-2 devtools:rounded-sm devtools:border devtools:border-border devtools:px-2 devtools:py-1.5 devtools:text-xs ${active ? "devtools:bg-accent" : "devtools:bg-card"}`}
 		>
-			<span
-				style={{
-					fontFamily: "monospace",
-					overflowWrap: "anywhere",
-					minWidth: 0,
-				}}
-			>
-				{page.urlPattern}{" "}
-				{active ? <Badge variant="secondary">Active</Badge> : null}
+			<span className="devtools:min-w-0 devtools:break-all devtools:font-mono">
+				{page.urlPattern}
+				{active ? (
+					<CircleCheck
+						className="devtools:ml-1 devtools:inline devtools:size-3.5 devtools:text-success"
+						aria-hidden="true"
+					/>
+				) : null}
 			</span>
-			<span
-				style={{
-					display: "flex",
-					alignItems: "center",
-					gap: 8,
-					flexWrap: "wrap",
-				}}
-			>
+			<span className="devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-2">
 				{page.dynamicParamNames.map((name) => (
 					<Input
 						key={name}
@@ -60,15 +46,17 @@ export function RouteRow({
 						value={values[name] ?? ""}
 						onChange={(event) => onParameterChange(name, event.target.value)}
 						placeholder={name}
-						style={{ width: 90, fontSize: 11, padding: "3px 5px" }}
+						className="devtools:h-7 devtools:w-[90px] devtools:px-1.5 devtools:text-[11px]"
 					/>
 				))}
-				<span style={{ color: "var(--muted-foreground, #71717a)" }}>
+				<span className="devtools:text-muted-foreground">
 					{page.fileRoles.join(", ")}
 					{page.execution ? ` · ${page.execution}` : ""}
 				</span>
-				<Button
+				<IconButton
 					type="button"
+					icon={ExternalLink}
+					label="Navigate"
 					onClick={() => target && onNavigate(target)}
 					disabled={!navigable}
 					title={
@@ -76,9 +64,7 @@ export function RouteRow({
 							? `Navigate to ${page.urlPattern}`
 							: "Enter route parameters first"
 					}
-				>
-					Navigate
-				</Button>
+				/>
 			</span>
 		</li>
 	);

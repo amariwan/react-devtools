@@ -23,13 +23,7 @@ export function ComponentRuntimeStatus({
 	return (
 		<div
 			aria-label="Suspense diagnostics"
-			style={{
-				fontSize: 11,
-				color: "var(--muted-foreground, #71717a)",
-				padding: "6px 8px",
-				border: "1px solid var(--border, #e4e4e7)",
-				borderRadius: 4,
-			}}
+			className="devtools:rounded-sm devtools:border devtools:border-border devtools:px-2 devtools:py-1.5 devtools:text-[11px] devtools:text-muted-foreground"
 		>
 			Suspense boundaries: {suspense?.length ?? 0}
 			{suspense?.length

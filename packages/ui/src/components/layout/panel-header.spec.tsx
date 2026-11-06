@@ -8,6 +8,6 @@ import { PanelHeader } from "./panel-header";
 describe("PanelHeader", () => {
 	it("renders title", () => {
 		render(<PanelHeader title="t" />);
-		expect(screen.getByText("t")).toBeTruthy();
+		expect(screen.getByRole("heading", { name: "t", level: 2 })).toBeTruthy();
 	});
 });

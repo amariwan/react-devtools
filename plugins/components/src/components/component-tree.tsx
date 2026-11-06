@@ -7,8 +7,7 @@ import {
 import { ComponentTreeItem } from "./component-tree-item.js";
 import { ComponentTreeToolbar } from "./component-tree-toolbar.js";
 
-const TREE_ROW_HEIGHT = 26;
-const TREE_VIEWPORT_HEIGHT = 420;
+const TREE_ROW_HEIGHT = 28;
 const TREE_OVERSCAN_ROWS = 8;
 
 type ComponentTreeProps = {
@@ -19,6 +18,7 @@ type ComponentTreeProps = {
 	onRootChange: (id: string) => void;
 	onSelect: (id: string) => Promise<void>;
 	onRefresh: () => Promise<void>;
+	highlightedIds?: ReadonlySet<string>;
 };
 
 export function ComponentTree({
@@ -29,9 +29,11 @@ export function ComponentTree({
 	onRootChange,
 	onSelect,
 	onRefresh,
+	highlightedIds = new Set(),
 }: ComponentTreeProps) {
 	const [query, setQuery] = React.useState("");
 	const [treeScrollTop, setTreeScrollTop] = React.useState(0);
+	const [treeViewportHeight, setTreeViewportHeight] = React.useState(0);
 	const [focusedTreeRow, setFocusedTreeRow] = React.useState<number | null>(
 		null,
 	);
@@ -78,6 +80,24 @@ export function ComponentTree({
 		setTreeScrollTop(0);
 		if (treeContainerRef.current) treeContainerRef.current.scrollTop = 0;
 	};
+	React.useLayoutEffect(() => {
+		const container = treeContainerRef.current;
+		if (!container) return;
+		const updateViewportHeight = () => {
+			const nextHeight = container.clientHeight;
+			setTreeViewportHeight((current) =>
+				current === nextHeight ? current : nextHeight,
+			);
+		};
+		updateViewportHeight();
+		if (typeof ResizeObserver === "undefined") {
+			window.addEventListener("resize", updateViewportHeight);
+			return () => window.removeEventListener("resize", updateViewportHeight);
+		}
+		const observer = new ResizeObserver(updateViewportHeight);
+		observer.observe(container);
+		return () => observer.disconnect();
+	}, []);
 
 	const revealedSelection = React.useRef<string | null>(null);
 	const scrolledSelection = React.useRef<string | null>(null);
@@ -120,7 +140,7 @@ export function ComponentTree({
 	);
 	const lastVisibleRow = Math.min(
 		rows.length,
-		Math.ceil((treeScrollTop + TREE_VIEWPORT_HEIGHT) / TREE_ROW_HEIGHT) +
+		Math.ceil((treeScrollTop + treeViewportHeight) / TREE_ROW_HEIGHT) +
 			TREE_OVERSCAN_ROWS,
 	);
 	const selectedRowIndex = selectedId
@@ -151,17 +171,7 @@ export function ComponentTree({
 	);
 
 	return (
-		<div
-			className="devtools-component-tree"
-			style={{
-				flex: "1 1 55%",
-				minWidth: 0,
-				display: "flex",
-				flexDirection: "column",
-				border: "1px solid var(--border, #e4e4e7)",
-				borderRadius: 6,
-			}}
-		>
+		<div className="devtools-component-tree devtools:flex devtools:min-h-0 devtools:min-w-0 devtools:flex-[1_1_55%] devtools:flex-col devtools:overflow-hidden devtools:rounded-md devtools:border devtools:border-border devtools:@max-[760px]/devtools:flex-1 devtools:@max-[760px]/devtools:group-data-[mobile-view=inspector]:hidden">
 			<ComponentTreeToolbar
 				query={query}
 				roots={roots}
@@ -174,24 +184,11 @@ export function ComponentTree({
 				ref={treeContainerRef}
 				role="tree"
 				aria-label="React component tree"
-				style={{
-					overflow: "auto",
-					flex: 1,
-					height: TREE_VIEWPORT_HEIGHT,
-					maxHeight: TREE_VIEWPORT_HEIGHT,
-					padding: "4px 0",
-				}}
+				className="devtools:min-h-0 devtools:flex-1 devtools:overflow-auto devtools:py-1"
 				onScroll={(event) => setTreeScrollTop(event.currentTarget.scrollTop)}
 			>
 				{rows.length === 0 ? (
-					<div
-						style={{
-							padding: 16,
-							fontSize: 12,
-							color: "var(--muted-foreground, #71717a)",
-							textAlign: "center",
-						}}
-					>
+					<div className="devtools:p-4 devtools:text-center devtools:text-xs devtools:text-muted-foreground">
 						{tree.length === 0
 							? "No components found in this React root yet."
 							: "No components match the filter."}
@@ -205,7 +202,7 @@ export function ComponentTree({
 					>
 						{rows
 							.slice(firstVisibleRow, lastVisibleRow)
-							.map(({ node, depth }, visibleIndex) => {
+							.map(({ node, depth, matchesQuery }, visibleIndex) => {
 								const rowIndex = firstVisibleRow + visibleIndex;
 								const selected = node.id === selectedId;
 								return (
@@ -216,6 +213,7 @@ export function ComponentTree({
 										rowIndex={rowIndex}
 										selected={selected}
 										roving={rowIndex === rovingRowIndex}
+										matchesQuery={Boolean(matchesQuery)}
 										query={query}
 										collapsedIds={collapsedIds}
 										siblingPosition={siblingPosition.get(node.id)}
@@ -224,6 +222,7 @@ export function ComponentTree({
 										onToggle={toggleExpanded}
 										onRowFocus={setFocusedTreeRow}
 										onFocusRow={focusTreeRow}
+										highlighted={highlightedIds.has(node.id)}
 										registerRef={(id, element) => {
 											if (element) treeItemRefs.current.set(id, element);
 											else treeItemRefs.current.delete(id);

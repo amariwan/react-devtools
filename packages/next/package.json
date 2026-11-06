@@ -1,5 +1,5 @@
 {
-	"name": "@next-devtools/next",
+	"name": "next-devtools",
 	"version": "0.0.0",
 	"private": false,
 	"license": "MIT",
@@ -52,12 +52,24 @@
 		}
 	},
 	"scripts": {
-		"build": "tsc -p tsconfig.json",
+		"build": "node scripts/build-package.mjs",
 		"prepack": "node -e \"const fs=require('node:fs'),path=require('node:path'); for (const file of fs.readdirSync('dist')) if (file.includes('.test.')) fs.rmSync(path.join('dist',file));\"",
 		"typecheck": "tsc --noEmit -p tsconfig.json",
 		"test": "vitest run"
 	},
 	"dependencies": {
+		"@base-ui/react": "^1.9.0",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"cytoscape": "^3.34.4",
+		"cytoscape-cose-bilkent": "^4.1.0",
+		"cytoscape-fcose": "^2.2.0",
+		"lucide-react": "^1.61.0",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"tailwind-merge": "^3.7.0"
+	},
+	"devDependencies": {
 		"@next-devtools/contracts": "workspace:*",
 		"@next-devtools/core": "workspace:*",
 		"@next-devtools/host-next": "workspace:*",
@@ -74,11 +86,11 @@
 		"@next-devtools/plugin-pages": "workspace:*",
 		"@next-devtools/plugin-state-redux": "workspace:*",
 		"@next-devtools/plugin-state-tanstack-query": "workspace:*",
-		"@next-devtools/plugin-state-zustand": "workspace:*"
-	},
-	"devDependencies": {
+		"@next-devtools/plugin-state-zustand": "workspace:*",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
+		"@tailwindcss/cli": "^4.3.3",
+		"tailwindcss": "^4.3.3",
 		"typescript": "^5.9.3"
 	},
 	"peerDependencies": {

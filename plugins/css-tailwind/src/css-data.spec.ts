@@ -18,8 +18,36 @@ describe("css data", () => {
 
 	it("extracts tokens", () => {
 		const d = buildCssData({
-			stylesheets: [":root { --color-primary: red; }"],
+			stylesheets: [
+				":root { --color-primary: red; } [data-theme=dark] { --color-primary: blue; }",
+			],
+			declarations: [
+				{
+					name: "--color-primary",
+					selector: ":root",
+					source: "app.css",
+					value: "red",
+				},
+				{
+					name: "--color-primary",
+					selector: "[data-theme=dark]",
+					source: "theme.css",
+					value: "blue",
+				},
+			],
 		});
-		expect(d.tokens).toContain("--color-primary");
+		expect(d.tokens).toEqual([
+			{
+				name: "--color-primary",
+				declarations: [
+					{ selector: ":root", source: "app.css", value: "red" },
+					{
+						selector: "[data-theme=dark]",
+						source: "theme.css",
+						value: "blue",
+					},
+				],
+			},
+		]);
 	});
 });

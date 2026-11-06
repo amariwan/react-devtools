@@ -1,4 +1,10 @@
-import { Button, SearchField, Select } from "@next-devtools/ui";
+import {
+	IconButton,
+	RefreshCw,
+	SearchField,
+	Select,
+	Toolbar,
+} from "@next-devtools/ui";
 
 type ComponentTreeToolbarProps = {
 	query: string;
@@ -18,28 +24,20 @@ export function ComponentTreeToolbar({
 	onRefresh,
 }: ComponentTreeToolbarProps) {
 	return (
-		<div
-			style={{
-				display: "flex",
-				alignItems: "center",
-				gap: 6,
-				flexWrap: "wrap",
-				padding: 8,
-				borderBottom: "1px solid var(--border, #e4e4e7)",
-			}}
-		>
-			<div style={{ fontSize: 12, fontWeight: 600, flex: "0 0 auto" }}>
+		<Toolbar className="devtools:gap-1.5 devtools:p-2">
+			<div className="devtools:shrink-0 devtools:text-xs devtools:font-semibold">
 				Component Tree
 			</div>
-			<div style={{ flex: "1 0 100%", minWidth: 0, order: 1 }}>
+			<div className="devtools:order-1 devtools:min-w-0 devtools:flex-[1_0_100%]">
 				<SearchField
 					value={query}
 					onChange={onQueryChange}
 					placeholder="Filter components…"
+					aria-label="Filter components"
 				/>
 			</div>
 			{roots.length > 1 ? (
-				<div style={{ width: 96 }}>
+				<div className="devtools:w-24">
 					<Select
 						value={activeRootId ?? ""}
 						onChange={onRootChange}
@@ -51,14 +49,14 @@ export function ComponentTreeToolbar({
 					/>
 				</div>
 			) : null}
-			<Button
+			<IconButton
 				type="button"
+				icon={RefreshCw}
+				label="Refresh component tree"
 				variant="outline"
-				size="sm"
+				size="icon-sm"
 				onClick={() => void onRefresh()}
-			>
-				Refresh
-			</Button>
-		</div>
+			/>
+		</Toolbar>
 	);
 }

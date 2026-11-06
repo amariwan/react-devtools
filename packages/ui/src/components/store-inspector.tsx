@@ -1,8 +1,10 @@
 import type { EncodedValue } from "@next-devtools/contracts";
+import { RefreshCw } from "lucide-react";
 import * as React from "react";
-import { childrenOf, summarizeValue } from "../helpers/value-format.js";
-import { EmptyState, SearchField, StatusDot } from "./primitives";
-import { Button } from "./ui/button";
+import { childrenOf } from "../helpers/value-format.js";
+import { EncodedValueBranch } from "./encoded-value-branch.js";
+import { EmptyState, IconButton, SearchField, StatusDot } from "./primitives";
+import { Select } from "./ui/select.js";
 
 export interface StoreInspectorProps {
 	adapters: readonly { id: string; label: string }[];
@@ -13,71 +15,6 @@ export interface StoreInspectorProps {
 	value?: EncodedValue | undefined;
 	onSelect: (id: string) => void | Promise<void>;
 	onRefresh: () => void | Promise<void>;
-}
-
-/** Mount children only when expanded, with bounded batches for large snapshots. */
-function ValueBranch({
-	value,
-	depth = 0,
-}: {
-	value: EncodedValue;
-	depth?: number;
-}) {
-	const [open, setOpen] = React.useState(depth === 0);
-	const [limit, setLimit] = React.useState(100);
-	const summary = summarizeValue(value);
-	const children = React.useMemo(
-		() => (open && depth < 20 ? childrenOf(value) : []),
-		[open, depth, value],
-	);
-	if (!summary.expandable)
-		return (
-			<span className="devtools:break-all devtools:text-foreground">
-				{summary.label}
-			</span>
-		);
-	if (depth >= 20)
-		return (
-			<span className="devtools:text-muted-foreground">
-				{summary.label} · depth limit reached
-			</span>
-		);
-	return (
-		<details
-			open={open}
-			onToggle={(event) => setOpen(event.currentTarget.open)}
-		>
-			<summary className="devtools:cursor-pointer devtools:rounded devtools:py-1 devtools:break-all devtools:text-primary devtools:hover:bg-accent">
-				{summary.label}
-			</summary>
-			{open && (
-				<div className="devtools:ml-2 devtools:border-l devtools:border-border devtools:pl-3">
-					{children.slice(0, limit).map((child) => (
-						<div
-							key={child.key}
-							className="devtools:flex devtools:items-baseline devtools:gap-2 devtools:py-0.5"
-						>
-							<span className="devtools:max-w-[50%] devtools:shrink-0 devtools:break-all devtools:text-muted-foreground">
-								{child.key}:
-							</span>
-							<div className="devtools:min-w-0 devtools:flex-1">
-								<ValueBranch value={child.value} depth={depth + 1} />
-							</div>
-						</div>
-					))}
-					{children.length > limit && (
-						<Button
-							size="sm"
-							variant="ghost"
-							onClick={() => setLimit((value) => value + 100)}
-						>
-							Show next {Math.min(100, children.length - limit)} properties
-						</Button>
-					)}
-				</div>
-			)}
-		</details>
-	);
 }
 
 export function StoreInspector({
@@ -92,6 +29,7 @@ export function StoreInspector({
 }: StoreInspectorProps) {
 	const [query, setQuery] = React.useState("");
 	const [actionError, setActionError] = React.useState<string | null>(null);
+	const [copyStatus, setCopyStatus] = React.useState<string | null>(null);
 	const id = React.useId();
 	const properties = React.useMemo(
 		() => (value === undefined ? [] : childrenOf(value)),
@@ -112,48 +50,58 @@ export function StoreInspector({
 			);
 		}
 	};
+	const copyValue = async (valueToCopy: EncodedValue, path: string) => {
+		setActionError(null);
+		setCopyStatus(null);
+		try {
+			const text = JSON.stringify(valueToCopy, null, 2);
+			if (text === undefined || !navigator.clipboard?.writeText) {
+				throw new Error("Clipboard access is unavailable.");
+			}
+			await navigator.clipboard.writeText(text);
+			setCopyStatus(`Copied JSON at ${path}.`);
+		} catch {
+			setActionError("Could not copy value. Check clipboard permissions.");
+		}
+	};
 	return (
 		<section
 			aria-label="Store inspector"
 			aria-busy={loading}
-			className="devtools:space-y-3"
+			className="devtools:space-y-2"
 		>
 			<div className="devtools:flex devtools:flex-wrap devtools:items-end devtools:gap-2">
-				<label
-					htmlFor={id}
-					className="devtools:min-w-0 devtools:flex-1 devtools:text-xs devtools:text-muted-foreground"
-				>
-					Store adapter
-					<select
+				<div className="devtools:min-w-0 devtools:flex-1 devtools:text-xs devtools:text-muted-foreground">
+					<label htmlFor={id}>Store adapter</label>
+					<Select
 						id={id}
-						aria-label="Store adapter"
+						label="Store adapter"
 						value={selectedAdapterId ?? ""}
 						disabled={!adapters.length || loading}
-						onChange={(event) => {
+						onChange={(adapterId) => {
 							setQuery("");
-							void perform(() => onSelect(event.target.value));
+							void perform(() => onSelect(adapterId));
 						}}
-						className="devtools:mt-1 devtools:h-8 devtools:w-full devtools:rounded-md devtools:border devtools:border-input devtools:bg-background devtools:px-2 devtools:text-sm devtools:text-foreground"
-					>
-						<option value="" disabled>
-							Select a store
-						</option>
-						{adapters.map((adapter) => (
-							<option key={adapter.id} value={adapter.id}>
-								{adapter.label}
-							</option>
-						))}
-					</select>
-				</label>
-				<Button
+						options={[
+							{ value: "", label: "Select a store", disabled: true },
+							...adapters.map(({ id: adapterId, label }) => ({
+								value: adapterId,
+								label,
+							})),
+						]}
+						className="devtools:mt-1 devtools:w-full"
+					/>
+				</div>
+				<IconButton
 					type="button"
-					size="sm"
+					size="icon-sm"
 					variant="outline"
+					icon={RefreshCw}
+					label={loading ? "Reading store" : "Refresh store"}
 					onClick={() => void perform(onRefresh)}
 					disabled={!selectedAdapterId || loading}
-				>
-					{loading ? "Reading…" : "Refresh"}
-				</Button>
+					aria-busy={loading}
+				/>
 			</div>
 			<div className="devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-2 devtools:text-xs devtools:text-muted-foreground">
 				<StatusDot status={status} label={status} />
@@ -162,6 +110,14 @@ export function StoreInspector({
 			{actionError && (
 				<p role="alert" className="devtools:text-xs devtools:text-destructive">
 					{actionError}
+				</p>
+			)}
+			{copyStatus && (
+				<p
+					role="status"
+					className="devtools:text-xs devtools:text-muted-foreground"
+				>
+					{copyStatus}
 				</p>
 			)}
 			{value !== undefined ? (
@@ -174,30 +130,41 @@ export function StoreInspector({
 							aria-label="Filter store properties"
 						/>
 					)}
-					<div
+					<section
 						aria-label="Store value"
-						className="devtools:max-h-[55dvh] devtools:overflow-auto devtools:rounded-md devtools:border devtools:border-border devtools:bg-card devtools:p-3 devtools:font-mono devtools:text-xs devtools:leading-relaxed"
+						className="devtools:@container/store-value devtools:max-h-[55dvh] devtools:overflow-auto devtools:rounded-md devtools:border devtools:border-border devtools:bg-card devtools:p-3 devtools:font-mono devtools:text-xs devtools:leading-relaxed"
 					>
 						{query.trim() ? (
 							matches.length ? (
 								matches.map((property) => (
 									<div
 										key={property.key}
-										className="devtools:flex devtools:gap-2 devtools:py-1"
+										className="devtools:flex devtools:gap-2 devtools:py-1 devtools:@max-[400px]/store-value:flex-col devtools:@max-[400px]/store-value:gap-0"
 									>
-										<span className="devtools:break-all devtools:text-muted-foreground">
+										<span className="devtools:min-w-0 devtools:basis-2/5 devtools:shrink-0 devtools:break-words devtools:text-muted-foreground devtools:@max-[400px]/store-value:basis-auto">
 											{property.key}:
 										</span>
-										<ValueBranch value={property.value} />
+										<div className="devtools:min-w-0 devtools:flex-1 devtools:@max-[400px]/store-value:w-full">
+											<EncodedValueBranch
+												value={property.value}
+												path={`$.${property.key}`}
+												onCopy={copyValue}
+											/>
+										</div>
 									</div>
 								))
 							) : (
 								<p>No properties match this filter.</p>
 							)
 						) : (
-							<ValueBranch key={selectedAdapterId} value={value} />
+							<EncodedValueBranch
+								key={selectedAdapterId}
+								value={value}
+								path="$"
+								onCopy={copyValue}
+							/>
 						)}
-					</div>
+					</section>
 				</>
 			) : (
 				<EmptyState

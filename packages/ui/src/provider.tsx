@@ -190,40 +190,49 @@ export function DevtoolsProvider({
 			});
 		});
 
-		const emitNavigation = () => {
+		const emitNavigation = (url = window.location.href) => {
 			runtimeServicesRef.current?.timeline.emit({
 				layer: "navigation",
 				type: "navigation",
-				payload: { url: window.location.href },
+				payload: { url },
 			});
 		};
 
 		// Track navigation for the route runtime.
 		const routeService = routeServiceRef.current;
-		const onLocationChange = () => {
+		const onLocationChange = (url = window.location.href) => {
 			try {
-				routeService?.setLocation(window.location.href);
-				emitNavigation();
+				routeService?.setLocation(url);
+				emitNavigation(url);
 			} catch {
 				/* ignore */
 			}
 		};
-		window.addEventListener("popstate", onLocationChange);
+		let effectActive = true;
+		const scheduleLocationChange = () => {
+			const url = window.location.href;
+			queueMicrotask(() => {
+				if (effectActive) onLocationChange(url);
+			});
+		};
+		const onPopState = () => onLocationChange();
+		window.addEventListener("popstate", onPopState);
 		// Patch history methods to observe client-side navigation.
 		const originalPushState = history.pushState.bind(history);
 		const originalReplaceState = history.replaceState.bind(history);
 		history.pushState = (...args: Parameters<typeof history.pushState>) => {
 			originalPushState(...args);
-			onLocationChange();
+			scheduleLocationChange();
 		};
 		history.replaceState = (
 			...args: Parameters<typeof history.replaceState>
 		) => {
 			originalReplaceState(...args);
-			onLocationChange();
+			scheduleLocationChange();
 		};
 
 		return () => {
+			effectActive = false;
 			unsubscribeReact();
 			unsubscribeReactCommits();
 			unregisterReactTimeline?.unregister();
@@ -235,7 +244,7 @@ export function DevtoolsProvider({
 			} catch {
 				/* ignore */
 			}
-			window.removeEventListener("popstate", onLocationChange);
+			window.removeEventListener("popstate", onPopState);
 			window.removeEventListener("error", onWindowError);
 			window.removeEventListener("unhandledrejection", onUnhandledRejection);
 			history.pushState = originalPushState;

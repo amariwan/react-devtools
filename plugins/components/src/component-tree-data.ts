@@ -7,6 +7,7 @@ import { fuzzyScore } from "@next-devtools/ui";
 export type ComponentTreeRow = {
 	node: ComponentNode;
 	depth: number;
+	matchesQuery?: boolean;
 };
 
 /**
@@ -64,9 +65,31 @@ export function filterComponentRows(
 ): ComponentTreeRow[] {
 	const trimmed = query.trim();
 	if (!trimmed) return [...rows];
-	return rows.filter(
-		(row) => fuzzyScore(trimmed, row.node.displayName) !== null,
+	const nodesById = new Map(rows.map(({ node }) => [node.id, node]));
+	const matchingIds = new Set(
+		rows
+			.filter(({ node }) => fuzzyScore(trimmed, node.displayName) !== null)
+			.map(({ node }) => node.id),
 	);
+	const visibleIds = new Set(matchingIds);
+
+	for (const id of matchingIds) {
+		const visitedAncestors = new Set<string>();
+		let parentId = nodesById.get(id)?.parentId;
+		while (
+			parentId &&
+			!visitedAncestors.has(parentId) &&
+			!visibleIds.has(parentId)
+		) {
+			visitedAncestors.add(parentId);
+			visibleIds.add(parentId);
+			parentId = nodesById.get(parentId)?.parentId;
+		}
+	}
+
+	return rows
+		.filter(({ node }) => visibleIds.has(node.id))
+		.map((row) => ({ ...row, matchesQuery: matchingIds.has(row.node.id) }));
 }
 
 /** `file:line[:column]` for display, or null when there is no file. */

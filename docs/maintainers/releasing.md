@@ -65,7 +65,7 @@ bun run release          # Publishes packages to npm
 
 ### Public packages
 
-The main public package is `@next-devtools/next`. Internal packages are published as needed for the dependency graph (see `.changeset/public-runtime-packages.md` and `.changeset/config.json`).
+The only public package is `next-devtools`. Internal packages are vendored into its build and are not published separately.
 
 ### Publishing validation
 
@@ -111,7 +111,7 @@ If a release has issues:
 
 1. **Do not unpublish** from npm if possible (npm doesn't allow unpublishing after 72 hours in many cases)
 2. **Publish a patch** with a fix if the issue is fixable
-3. **Deprecate** the broken version: `npm deprecate @next-devtools/next@x.y.z "Broken, use x.y.z+1 instead"`
+3. **Deprecate** the broken version: `npm deprecate @next-devtools@x.y.z "Broken, use x.y.z+1 instead"`
 4. **Document** the issue in the changelog and release notes
 5. **Communicate** the issue through GitHub releases/issues
 

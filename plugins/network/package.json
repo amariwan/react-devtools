@@ -1,7 +1,7 @@
 {
 	"name": "@next-devtools/plugin-network",
 	"version": "0.0.0",
-	"private": false,
+	"private": true,
 	"license": "MIT",
 	"files": ["dist"],
 	"type": "module",

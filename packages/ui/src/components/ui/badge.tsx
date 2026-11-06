@@ -16,7 +16,7 @@ export function Badge({
 		<span
 			data-slot="badge"
 			className={cn(
-				"devtools:inline-flex devtools:items-center devtools:gap-1 devtools:rounded-full devtools:border devtools:px-2 devtools:py-0.5 devtools:text-[11px] devtools:font-medium devtools:leading-none devtools:whitespace-nowrap",
+				"devtools:inline-flex devtools:items-center devtools:gap-1 devtools:rounded-md devtools:border devtools:px-1.5 devtools:py-1 devtools:text-xs devtools:font-medium devtools:leading-none devtools:whitespace-nowrap",
 				variant === "default" &&
 					"devtools:border-transparent devtools:bg-primary devtools:text-primary-foreground",
 				variant === "secondary" &&

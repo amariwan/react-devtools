@@ -3,6 +3,8 @@
 import { SearchIcon, XIcon } from "lucide-react";
 import * as React from "react";
 import { cn } from "../../lib/utils.js";
+import { IconButton } from "./icon-button.js";
+import { Input } from "./input.js";
 
 export interface GooeyInputProps {
 	value: string;
@@ -25,18 +27,16 @@ export function GooeyInput({
 }: GooeyInputProps) {
 	const [open, setOpen] = React.useState(false);
 	const inputRef = React.useRef<HTMLInputElement>(null);
-	const reactId = React.useId();
-	const filterId = `devtools-gooey-${reactId.replace(/:/g, "")}`;
 
-	const expand = () => {
+	const expand = React.useCallback(() => {
 		setOpen(true);
 		onOpen?.();
 		requestAnimationFrame(() => inputRef.current?.focus());
-	};
-	const collapse = () => {
+	}, [onOpen]);
+	const collapse = React.useCallback(() => {
 		setOpen(false);
 		onChange("");
-	};
+	}, [onChange]);
 
 	React.useEffect(() => {
 		if (!open) return;
@@ -48,100 +48,55 @@ export function GooeyInput({
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [open]);
+	}, [open, collapse]);
 
 	const showClear = open && value.length > 0;
 
 	return (
 		<div
 			className={cn(
-				"devtools:relative devtools:inline-flex devtools:items-center",
+				"devtools:flex devtools:h-8 devtools:items-center devtools:overflow-hidden devtools:rounded-md devtools:border devtools:border-input devtools:bg-background devtools:transition-[width] devtools:duration-150 devtools:motion-reduce:transition-none",
+				open && "devtools:gap-0.5 devtools:pr-0.5",
 				className,
 			)}
+			style={{
+				width: open ? expandedWidth : collapsedWidth,
+			}}
 		>
-			<svg
-				aria-hidden
-				className="devtools:absolute devtools:h-0 devtools:w-0"
-				xmlns="http://www.w3.org/2000/svg"
-			>
-				<defs>
-					<filter id={filterId}>
-						<feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
-						<feColorMatrix
-							in="blur"
-							mode="matrix"
-							values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"
-							result="gooey"
-						/>
-						<feComposite in="SourceGraphic" in2="gooey" operator="atop" />
-					</filter>
-				</defs>
-			</svg>
-
-			{/* Gooey shapes layer */}
-			<div
-				className="devtools:relative devtools:flex devtools:items-center"
-				style={{ filter: `url(#${filterId})` }}
-			>
-				<div
-					className={cn(
-						"devtools:rounded-full devtools:bg-muted devtools:transition-[width] devtools:duration-300",
-						open ? "devtools:opacity-100" : "devtools:opacity-0",
-					)}
-					style={{
-						width: open ? expandedWidth : 0,
-						height: collapsedWidth,
-						transition:
-							"width 300ms cubic-bezier(0.16,1,0.3,1), opacity 200ms ease",
-					}}
-				/>
-				<button
-					type="button"
-					aria-label="Search panels and commands"
-					onClick={open ? collapse : expand}
-					className="devtools:relative devtools:z-10 devtools:flex devtools:shrink-0 devtools:items-center devtools:justify-center devtools:rounded-full devtools:bg-primary devtools:text-primary-foreground devtools:transition-transform devtools:duration-200 devtools:ease-out hover:devtools:scale-105"
-					style={{
-						width: collapsedWidth,
-						height: collapsedWidth,
-						marginLeft: open ? -16 : 0,
-					}}
-				>
-					{showClear ? (
-						<XIcon className="devtools:size-4" aria-hidden />
-					) : (
-						<SearchIcon className="devtools:size-4" aria-hidden />
-					)}
-				</button>
-			</div>
-
-			{/* Unfiltered content layer on top */}
 			{open ? (
-				<input
-					ref={inputRef}
-					type="search"
-					aria-label={placeholder}
-					value={value}
-					onChange={(e) => {
-						onChange(e.target.value);
-						if (!open) expand();
-					}}
-					placeholder={placeholder}
-					className="devtools:absolute devtools:top-0 devtools:left-3 devtools:h-full devtools:bg-transparent devtools:text-sm devtools:text-foreground devtools:outline-none devtools:placeholder:text-muted-foreground"
-					style={{ width: expandedWidth - 40 }}
+				<>
+					<Input
+						ref={inputRef}
+						type="text"
+						role="searchbox"
+						aria-label={placeholder}
+						value={value}
+						onChange={(event) => onChange(event.target.value)}
+						placeholder={placeholder}
+						className="devtools:h-full devtools:min-w-0 devtools:flex-1 devtools:border-0 devtools:bg-transparent devtools:px-2 devtools:py-0 devtools:shadow-none devtools:focus-visible:border-transparent devtools:focus-visible:ring-0"
+					/>
+					{showClear ? (
+						<IconButton
+							icon={XIcon}
+							label="Clear search"
+							size="icon-sm"
+							onClick={() => onChange("")}
+						/>
+					) : null}
+					<IconButton
+						icon={XIcon}
+						label="Close search"
+						size="icon-sm"
+						onClick={collapse}
+					/>
+				</>
+			) : (
+				<IconButton
+					icon={SearchIcon}
+					label="Search panels and commands"
+					onClick={expand}
 				/>
-			) : null}
-
-			{showClear ? (
-				<button
-					type="button"
-					onClick={() => onChange("")}
-					aria-label="Clear search"
-					className="devtools:absolute devtools:top-1/2 devtools:-translate-y-1/2 devtools:flex devtools:size-6 devtools:items-center devtools:justify-center devtools:rounded devtools:text-muted-foreground devtools:hover:text-foreground"
-					style={{ right: 40 }}
-				>
-					<XIcon className="devtools:size-3" aria-hidden />
-				</button>
-			) : null}
+			)}
 		</div>
 	);
 }

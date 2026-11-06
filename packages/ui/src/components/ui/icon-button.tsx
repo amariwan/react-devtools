@@ -7,6 +7,7 @@ type IconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 
 export interface IconButtonProps extends React.ComponentProps<typeof Button> {
 	icon: IconComponent;
+	iconClassName?: string;
 	/** Accessible name; also used as the native tooltip. */
 	label: string;
 }
@@ -16,6 +17,7 @@ export function IconButton({
 	label,
 	variant = "ghost",
 	size = "icon",
+	iconClassName,
 	className,
 	...props
 }: IconButtonProps) {
@@ -28,7 +30,7 @@ export function IconButton({
 			className={className}
 			{...props}
 		>
-			<Icon aria-hidden />
+			<Icon aria-hidden className={iconClassName} />
 		</Button>
 	);
 }

@@ -27,14 +27,29 @@ function TooltipTrigger({
 function TooltipContent({
 	className,
 	sideOffset = 4,
+	side,
+	align,
+	alignOffset,
+	hidden,
 	...props
 }: React.ComponentProps<typeof TooltipPrimitive.Popup> & {
 	sideOffset?: number;
+	side?: React.ComponentProps<typeof TooltipPrimitive.Positioner>["side"];
+	align?: React.ComponentProps<typeof TooltipPrimitive.Positioner>["align"];
+	alignOffset?: number;
+	hidden?: boolean;
 }) {
+	const container = useDevtoolsPortalContainer();
+
+	if (hidden) return null;
+
 	return (
-		<TooltipPrimitive.Portal container={useDevtoolsPortalContainer()}>
+		<TooltipPrimitive.Portal container={container}>
 			<TooltipPrimitive.Positioner
 				className="devtools:z-[2147483647]"
+				side={side}
+				align={align}
+				alignOffset={alignOffset}
 				sideOffset={sideOffset}
 			>
 				<TooltipPrimitive.Popup

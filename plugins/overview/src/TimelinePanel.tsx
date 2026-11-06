@@ -6,7 +6,13 @@ import {
 	compareProfilerInsights,
 } from "@next-devtools/core";
 import type { TimelineRuntime } from "@next-devtools/core";
-import { Badge, EmptyState, PanelHeader } from "@next-devtools/ui";
+import {
+	Badge,
+	EmptyState,
+	IconButton,
+	Info,
+	PanelHeader,
+} from "@next-devtools/ui";
 import * as React from "react";
 import { DebugSessionsSection } from "./components/debug-sessions-section.js";
 import { ProfilerSections } from "./components/profiler-sections.js";
@@ -24,14 +30,6 @@ export default function TimelinePanel({
 		RUNTIME_SERVICE_IDS.timeline,
 	);
 	const [, setPollTick] = React.useState(0);
-	React.useEffect(() => {
-		if (!service) return;
-		const interval = window.setInterval(() => {
-			service.refresh();
-			setPollTick((tick) => tick + 1);
-		}, 250);
-		return () => window.clearInterval(interval);
-	}, [service]);
 	const subscribe = React.useMemo(
 		() => (listener: () => void) =>
 			service?.subscribe(listener) ?? (() => undefined),
@@ -47,6 +45,14 @@ export default function TimelinePanel({
 		getSnapshot,
 	);
 	const data = React.useMemo(() => buildTimelineData(snapshot), [snapshot]);
+	React.useEffect(() => {
+		if (!service || !data.recording) return;
+		const interval = window.setInterval(() => {
+			service.refresh();
+			setPollTick((tick) => tick + 1);
+		}, 250);
+		return () => window.clearInterval(interval);
+	}, [service, data.recording]);
 	const profiler = React.useMemo(
 		() => buildProfilerInsights(data.events),
 		[data.events],
@@ -80,26 +86,23 @@ export default function TimelinePanel({
 	};
 
 	return (
-		<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+		<div className="devtools:flex devtools:flex-col devtools:gap-2">
 			<PanelHeader
 				title="Timeline"
 				actions={
-					<Badge variant="secondary">
-						{data.recording ? "Recording" : "Stopped"} · {data.count} events
-						{data.dropped ? ` · ${data.dropped} dropped` : ""}
-					</Badge>
+					<>
+						<Badge variant="secondary">
+							{data.recording ? "Recording" : "Stopped"} · {data.count} events
+							{data.dropped ? ` · ${data.dropped} dropped` : ""}
+						</Badge>
+						<IconButton
+							icon={Info}
+							label="Runtime events come from registered DevTools layers. React commit profiling is not inferred from this stream."
+							size="icon-xs"
+						/>
+					</>
 				}
 			/>
-			<p
-				style={{
-					fontSize: 13,
-					color: "var(--muted-foreground, #71717a)",
-					margin: 0,
-				}}
-			>
-				Bounded runtime events from registered DevTools layers. React commit
-				profiling is not inferred from this stream.
-			</p>
 			<TimelineControls
 				available={Boolean(service)}
 				onStart={() => service?.startRecording()}

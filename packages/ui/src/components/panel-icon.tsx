@@ -8,6 +8,7 @@ import {
 	NetworkIcon,
 	PaletteIcon,
 	SettingsIcon,
+	SlidersHorizontalIcon,
 	SparklesIcon,
 } from "lucide-react";
 import type * as React from "react";
@@ -32,6 +33,7 @@ const ICON_MAP: Record<string, PanelIconComponent> = {
 	agent: BotIcon,
 	sparkles: SparklesIcon,
 	settings: SettingsIcon,
+	"custom-inspector": SlidersHorizontalIcon,
 };
 
 export function resolveIcon(

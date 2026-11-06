@@ -1,9 +1,11 @@
 /**
  * @vitest-environment jsdom
  */
-import { render } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import TanStackQueryPanel from "./TanStackQueryPanel";
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe("TanStackQueryPanel", () => {
 	it("renders", () => {
@@ -25,5 +27,19 @@ describe("TanStackQueryPanel", () => {
 		} as never;
 		const { container } = render(<TanStackQueryPanel registry={registry} />);
 		expect(container).toBeTruthy();
+	});
+
+	it("explains detected clients when no adapter is registered", () => {
+		vi.stubGlobal("__TANSTACK_QUERY_CLIENT__", {});
+		render(
+			<TanStackQueryPanel
+				registry={{ services: { get: () => undefined } } as never}
+			/>,
+		);
+
+		expect(screen.getByText("QueryClient detected")).toBeTruthy();
+		expect(
+			screen.queryByRole("combobox", { name: "Store adapter" }),
+		).toBeNull();
 	});
 });

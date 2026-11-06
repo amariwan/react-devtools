@@ -8,12 +8,15 @@ import { ErrorState } from "../components/primitives";
 export function PanelView({
 	registry,
 	panel,
+	highlightUpdates = false,
 }: {
 	registry: PluginRegistry;
 	panel: PanelDescriptor;
+	highlightUpdates?: boolean;
 }) {
 	const [Comp, setComp] = React.useState<React.ComponentType<{
 		registry: PluginRegistry;
+		highlightUpdates?: boolean;
 	}> | null>(null);
 	const [attempt, retry] = React.useReducer((value) => value + 1, 0);
 	const [error, setError] = React.useState<Error | null>(null);
@@ -27,12 +30,18 @@ export function PanelView({
 			.then((mod: unknown) => {
 				if (cancelled) return;
 				const m = mod as {
-					default?: React.ComponentType<{ registry: PluginRegistry }>;
+					default?: React.ComponentType<{
+						registry: PluginRegistry;
+						highlightUpdates?: boolean;
+					}>;
 				};
 				setComp(
 					() =>
 						m?.default ??
-						(mod as React.ComponentType<{ registry: PluginRegistry }>),
+						(mod as React.ComponentType<{
+							registry: PluginRegistry;
+							highlightUpdates?: boolean;
+						}>),
 				);
 			})
 			.catch((e: unknown) => {
@@ -62,11 +71,11 @@ export function PanelView({
 				<p>Loading {panel.title}…</p>
 				<div
 					aria-hidden
-					className="devtools:h-8 devtools:rounded devtools:bg-muted"
+					className="devtools:animate-pulse devtools:h-8 devtools:rounded devtools:bg-muted"
 				/>
 				<div
 					aria-hidden
-					className="devtools:h-24 devtools:rounded devtools:bg-muted"
+					className="devtools:animate-pulse devtools:h-24 devtools:rounded devtools:bg-muted"
 				/>
 			</div>
 		);
@@ -77,7 +86,7 @@ export function PanelView({
 			title={panel.title}
 			onRetry={retry}
 		>
-			<Comp registry={registry} />
+			<Comp registry={registry} highlightUpdates={highlightUpdates} />
 		</PanelBoundary>
 	);
 }

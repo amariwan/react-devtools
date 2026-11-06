@@ -2,7 +2,15 @@ import type {
 	DependencyEdgeKind,
 	DependencyNodeKind,
 } from "@next-devtools/runtime-react";
-import { Toggle } from "@next-devtools/ui";
+import {
+	CircleDot,
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+	Toggle,
+	Toolbar,
+	Workflow,
+} from "@next-devtools/ui";
 import {
 	EDGE_KIND_META,
 	EDGE_KIND_ORDER,
@@ -37,73 +45,73 @@ export function GraphFilters({
 	};
 
 	return (
-		<div
-			style={{
-				display: "flex",
-				flexDirection: "column",
-				gap: 6,
-				padding: "8px 10px",
-				borderBottom: "1px solid var(--border, rgba(127,127,127,0.25))",
-			}}
-		>
-			<div
-				style={{
-					display: "flex",
-					flexWrap: "wrap",
-					alignItems: "center",
-					gap: 4,
-				}}
-			>
-				<span
-					style={{
-						fontSize: 12,
-						fontWeight: 600,
-						color: "var(--muted-foreground)",
-						marginRight: 4,
-					}}
+		<Toolbar className="devtools:items-start devtools:gap-2 devtools:px-3 devtools:py-2">
+			<Collapsible>
+				<CollapsibleTrigger
+					type="button"
+					aria-label={`Node type filters, ${nodeKinds.size} of ${NODE_KIND_ORDER.length} enabled`}
+					title="Node type filters"
+					className="devtools:inline-flex devtools:cursor-pointer devtools:items-center devtools:gap-1 devtools:rounded-md devtools:px-2 devtools:py-1.5 devtools:text-xs devtools:font-medium devtools:text-muted-foreground devtools:hover:bg-muted devtools:focus-visible:outline-none devtools:focus-visible:ring-2 devtools:focus-visible:ring-ring"
 				>
-					Nodes
-				</span>
-				{NODE_KIND_ORDER.map((kind) => (
-					<Toggle
-						key={kind}
-						pressed={nodeKinds.has(kind)}
-						onPressedChange={(pressed) => toggleNode(kind, pressed)}
-						aria-label={`Toggle ${NODE_KIND_META[kind].label} nodes`}
+					<CircleDot size={14} aria-hidden="true" />
+					<span className="devtools:font-mono devtools:tabular-nums">
+						{nodeKinds.size}/{NODE_KIND_ORDER.length}
+					</span>
+				</CollapsibleTrigger>
+				<CollapsibleContent>
+					<div
+						role="group"
+						aria-label="Node type filters"
+						className="devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-1.5 devtools:pt-2"
 					>
-						{NODE_KIND_META[kind].shortLabel}
-					</Toggle>
-				))}
-			</div>
-			<div
-				style={{
-					display: "flex",
-					flexWrap: "wrap",
-					alignItems: "center",
-					gap: 4,
-				}}
-			>
-				<span
-					style={{
-						fontSize: 12,
-						fontWeight: 600,
-						color: "var(--muted-foreground)",
-						marginRight: 4,
-					}}
+						{NODE_KIND_ORDER.map((kind) => (
+							<Toggle
+								key={kind}
+								pressed={nodeKinds.has(kind)}
+								onPressedChange={(pressed) => toggleNode(kind, pressed)}
+								aria-label={`Toggle ${NODE_KIND_META[kind].label} nodes`}
+								title={NODE_KIND_META[kind].description}
+								className="devtools:h-7 devtools:px-2 devtools:text-xs"
+							>
+								{NODE_KIND_META[kind].label}
+							</Toggle>
+						))}
+					</div>
+				</CollapsibleContent>
+			</Collapsible>
+			<Collapsible>
+				<CollapsibleTrigger
+					type="button"
+					aria-label={`Relationship filters, ${edgeKinds.size} of ${EDGE_KIND_ORDER.length} enabled`}
+					title="Relationship filters"
+					className="devtools:inline-flex devtools:cursor-pointer devtools:items-center devtools:gap-1 devtools:rounded-md devtools:px-2 devtools:py-1.5 devtools:text-xs devtools:font-medium devtools:text-muted-foreground devtools:hover:bg-muted devtools:focus-visible:outline-none devtools:focus-visible:ring-2 devtools:focus-visible:ring-ring"
 				>
-					Edges
-				</span>
-				{EDGE_KIND_ORDER.map((kind) => (
-					<Toggle
-						key={kind}
-						pressed={edgeKinds.has(kind)}
-						onPressedChange={(pressed) => toggleEdge(kind, pressed)}
-						aria-label={`Toggle ${EDGE_KIND_META[kind].label} edges`}
+					<Workflow size={14} aria-hidden="true" />
+					<span className="devtools:font-mono devtools:tabular-nums">
+						{edgeKinds.size}/{EDGE_KIND_ORDER.length}
+					</span>
+				</CollapsibleTrigger>
+				<CollapsibleContent>
+					<div
+						role="group"
+						aria-label="Relationship filters"
+						className="devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-1.5 devtools:pt-2"
 					>
-						{EDGE_KIND_META[kind].label}
-					</Toggle>
-				))}
-			</div>
-		</div>
+						{EDGE_KIND_ORDER.map((kind) => (
+							<Toggle
+								key={kind}
+								pressed={edgeKinds.has(kind)}
+								onPressedChange={(pressed) => toggleEdge(kind, pressed)}
+								aria-label={`Toggle ${EDGE_KIND_META[kind].label} edges`}
+								title={EDGE_KIND_META[kind].description}
+								className="devtools:h-7 devtools:px-2 devtools:text-xs"
+							>
+								{EDGE_KIND_META[kind].label}
+							</Toggle>
+						))}
+					</div>
+				</CollapsibleContent>
+			</Collapsible>
+		</Toolbar>
 	);
 }

@@ -1,17 +1,17 @@
-# @next-devtools/next
+# next-devtools
 
 Development-only React and Next.js DevTools for Next.js 16 and React 19.
 
 ## Install
 
 ```bash
-bun add -d @next-devtools/next
+bun add -d next-devtools
 ```
 
 ```ts
 // next.config.ts
 import type { NextConfig } from "next";
-import { withNextDevtools } from "@next-devtools/next";
+import { withNextDevtools } from "next-devtools";
 
 const nextConfig: NextConfig = {};
 

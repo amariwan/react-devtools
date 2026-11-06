@@ -2,7 +2,7 @@ import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
 export const GENERATED_CONFIG = `/* next-devtools:init:start */
-import { withNextDevtools } from "@next-devtools/next";
+import { withNextDevtools } from "next-devtools";
 
 const nextConfig = {};
 
@@ -80,7 +80,7 @@ export function inspectProject(root: string): DoctorReport {
 	const configPath = findNextConfig(root);
 	const config = configPath ? readFileSync(configPath, "utf8") : "";
 	const hasNext = dependencyPresent(packageJson, "next");
-	const hasDevtools = dependencyPresent(packageJson, "@next-devtools/next");
+	const hasDevtools = dependencyPresent(packageJson, "next-devtools");
 	const hasAppRoot = ["src/app", "app"].some((path) =>
 		existsSync(join(root, path)),
 	);
@@ -123,9 +123,9 @@ export function inspectProject(root: string): DoctorReport {
 		{
 			name: "Public package",
 			status: hasDevtools ? "pass" : "warn",
-			detail: hasDevtools
-				? "@next-devtools/next is declared"
-				: "Declare @next-devtools/next before starting Next.js",
+				detail: hasDevtools
+					? "next-devtools is declared"
+					: "Declare next-devtools before starting Next.js",
 		},
 	];
 	return { root, checks, ok: checks.every((check) => check.status !== "fail") };
@@ -161,7 +161,7 @@ export function initProject(root: string, write = false) {
 		root,
 		configPath,
 		action: "created" as const,
-		message: `Created ${configPath}. Declare @next-devtools/next before running Next.js.`,
+		message: `Created ${configPath}. Declare next-devtools before running Next.js.`,
 	};
 }
 

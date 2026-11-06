@@ -8,6 +8,19 @@ export type GraphLayoutName =
 	| "breadthfirst"
 	| "grid";
 
+const DENSE_GRAPH_LABEL_NODE_COUNT = 160;
+const DENSE_GRAPH_LABEL_ZOOM = 0.6;
+
+/** Hide labels only when a large graph is zoomed out to its overview. */
+export function shouldHideGraphLabels(
+	nodeCount: number,
+	zoom: number,
+): boolean {
+	return (
+		nodeCount >= DENSE_GRAPH_LABEL_NODE_COUNT && zoom < DENSE_GRAPH_LABEL_ZOOM
+	);
+}
+
 export interface GraphLayoutDescriptor {
 	readonly value: GraphLayoutName;
 	readonly label: string;

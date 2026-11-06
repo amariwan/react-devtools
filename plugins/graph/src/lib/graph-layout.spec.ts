@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	clampFcoseSettings,
 	hasBlockingFcoseIssues,
+	shouldHideGraphLabels,
 	validateFcoseSettings,
 } from "./graph-layout";
 
@@ -40,5 +41,11 @@ describe("graph layout", () => {
 
 	it("checks blocking issues", () => {
 		expect(typeof hasBlockingFcoseIssues([])).toBe("boolean");
+	});
+
+	it("hides labels only for large graph overviews", () => {
+		expect(shouldHideGraphLabels(320, 0.45)).toBe(true);
+		expect(shouldHideGraphLabels(320, 0.8)).toBe(false);
+		expect(shouldHideGraphLabels(20, 0.45)).toBe(false);
 	});
 });

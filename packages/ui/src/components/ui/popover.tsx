@@ -18,15 +18,21 @@ function PopoverTrigger({
 function PopoverContent({
 	className,
 	sideOffset = 4,
+	side,
+	align,
 	...props
 }: React.ComponentProps<typeof PopoverPrimitive.Popup> & {
 	sideOffset?: number;
+	side?: React.ComponentProps<typeof PopoverPrimitive.Positioner>["side"];
+	align?: React.ComponentProps<typeof PopoverPrimitive.Positioner>["align"];
 }) {
 	return (
 		<PopoverPrimitive.Portal container={useDevtoolsPortalContainer()}>
 			<PopoverPrimitive.Positioner
 				className="devtools:z-[2147483647]"
 				sideOffset={sideOffset}
+				side={side}
+				align={align}
 			>
 				<PopoverPrimitive.Popup
 					data-slot="popover-content"

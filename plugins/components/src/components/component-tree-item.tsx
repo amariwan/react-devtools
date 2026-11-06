@@ -1,8 +1,9 @@
 import type { ComponentNode } from "@next-devtools/runtime-react";
+import { Button, ChevronDown, ChevronRight, cn } from "@next-devtools/ui";
 import type { ComponentTreeRow as TreeRow } from "../component-tree-data.js";
 import { formatSourceLocation } from "../component-tree-data.js";
 
-const TREE_ROW_HEIGHT = 26;
+const TREE_ROW_HEIGHT = 28;
 
 type ComponentTreeItemProps = {
 	node: ComponentNode;
@@ -10,10 +11,12 @@ type ComponentTreeItemProps = {
 	rowIndex: number;
 	selected: boolean;
 	roving: boolean;
+	matchesQuery?: boolean;
 	query: string;
 	collapsedIds: ReadonlySet<string>;
 	siblingPosition: { position: number; size: number } | undefined;
 	rows: readonly TreeRow[];
+	highlighted?: boolean;
 	onSelect: (id: string) => Promise<void>;
 	onToggle: (id: string) => void;
 	onRowFocus: (index: number) => void;
@@ -27,20 +30,26 @@ export function ComponentTreeItem({
 	rowIndex,
 	selected,
 	roving,
+	matchesQuery = false,
 	query,
 	collapsedIds,
 	siblingPosition,
 	rows,
+	highlighted = false,
 	onSelect,
 	onToggle,
 	onRowFocus,
 	onFocusRow,
 	registerRef,
 }: ComponentTreeItemProps) {
+	const hasChildren = node.childIds.length > 0;
+	const isSearching = Boolean(query.trim());
+	const isExpanded = !collapsedIds.has(node.id) || isSearching;
+	const canToggle = hasChildren && !isSearching;
+
 	return (
 		<div
 			key={node.id}
-			className="devtools-tree-row"
 			ref={(element) => {
 				if (element) registerRef(node.id, element);
 				else registerRef(node.id, null);
@@ -51,11 +60,8 @@ export function ComponentTreeItem({
 			aria-level={depth + 1}
 			aria-posinset={siblingPosition?.position}
 			aria-setsize={siblingPosition?.size}
-			aria-expanded={
-				node.childIds.length
-					? !collapsedIds.has(node.id) || Boolean(query.trim())
-					: undefined
-			}
+			aria-expanded={hasChildren ? isExpanded : undefined}
+			data-updated={highlighted || undefined}
 			title={formatSourceLocation(node.source) ?? node.displayName}
 			onClick={() => void onSelect(node.id)}
 			onFocus={() => onRowFocus(rowIndex)}
@@ -67,8 +73,7 @@ export function ComponentTreeItem({
 				}
 				if (event.key === "ArrowRight") {
 					event.preventDefault();
-					if (node.childIds.length && collapsedIds.has(node.id))
-						onToggle(node.id);
+					if (canToggle && !isExpanded) onToggle(node.id);
 					else if (rows[rowIndex + 1]?.depth === depth + 1)
 						onFocusRow(rowIndex + 1);
 				} else if (event.key === "ArrowLeft") {
@@ -99,56 +104,49 @@ export function ComponentTreeItem({
 					onFocusRow(rows.length - 1);
 				}
 			}}
-			style={{
-				position: "absolute",
-				top: rowIndex * TREE_ROW_HEIGHT,
-				left: 0,
-				right: 0,
-				height: TREE_ROW_HEIGHT,
-				display: "flex",
-				alignItems: "center",
-				gap: 6,
-				width: "100%",
-				textAlign: "left",
-				padding: `3px 8px 3px ${8 + depth * 14}px`,
-				border: "none",
-				borderLeft: selected
-					? "2px solid var(--primary)"
-					: "2px solid transparent",
-				background: selected ? "var(--accent)" : "transparent",
-				color: "inherit",
-				cursor: "pointer",
-				fontSize: 12,
-			}}
+			className={cn(
+				"devtools:absolute devtools:inset-x-0 devtools:flex devtools:h-7 devtools:items-center devtools:gap-1.5 devtools:border-l-2 devtools:py-[2px] devtools:pr-2 devtools:text-left devtools:text-xs devtools:text-foreground devtools:transition-colors devtools:duration-100 devtools:motion-reduce:transition-none devtools:focus-visible:z-10 devtools:focus-visible:outline-none devtools:focus-visible:ring-2 devtools:focus-visible:ring-inset devtools:focus-visible:ring-ring",
+				selected
+					? "devtools:border-l-primary devtools:bg-accent"
+					: "devtools:border-l-transparent devtools:bg-transparent devtools:hover:bg-muted/70",
+				highlighted && "devtools-component-update-highlight",
+			)}
+			style={{ top: rowIndex * TREE_ROW_HEIGHT, paddingLeft: 8 + depth * 14 }}
 		>
-			<button
-				type="button"
-				tabIndex={-1}
-				aria-label={`${collapsedIds.has(node.id) ? "Expand" : "Collapse"} ${node.displayName}`}
-				onClick={(event) => {
-					if (!node.childIds.length || query.trim()) return;
-					event.stopPropagation();
-					onToggle(node.id);
-				}}
-				style={{
-					width: 14,
-					flex: "0 0 14px",
-					color: "var(--muted-foreground)",
-				}}
-			>
-				{node.childIds.length
-					? collapsedIds.has(node.id) && !query.trim()
-						? "▸"
-						: "▾"
-					: ""}
-			</button>
+			{canToggle ? (
+				<Button
+					type="button"
+					tabIndex={-1}
+					variant="ghost"
+					size="icon-xs"
+					aria-label={`${isExpanded ? "Collapse" : "Expand"} ${node.displayName}`}
+					onClick={(event) => {
+						event.stopPropagation();
+						onToggle(node.id);
+					}}
+					className="devtools:shrink-0 devtools:text-muted-foreground"
+				>
+					{isExpanded ? (
+						<ChevronDown aria-hidden="true" className="devtools:size-3.5" />
+					) : (
+						<ChevronRight aria-hidden="true" className="devtools:size-3.5" />
+					)}
+				</Button>
+			) : (
+				<span
+					aria-hidden="true"
+					className="devtools:flex devtools:size-6 devtools:shrink-0 devtools:items-center devtools:justify-center"
+				>
+					{hasChildren ? <ChevronDown className="devtools:size-3.5" /> : null}
+				</span>
+			)}
 			<span
-				style={{
-					overflow: "hidden",
-					textOverflow: "ellipsis",
-					whiteSpace: "nowrap",
-					fontFamily: node.kind === "host" ? "monospace" : undefined,
-				}}
+				className={cn(
+					"devtools:min-w-0 devtools:overflow-hidden devtools:text-ellipsis devtools:whitespace-nowrap",
+					matchesQuery &&
+						"devtools:rounded-sm devtools:bg-primary/10 devtools:px-1 devtools:font-semibold devtools:text-primary",
+					node.kind === "host" && "devtools:font-mono",
+				)}
 			>
 				{node.displayName}
 			</span>
@@ -156,23 +154,10 @@ export function ComponentTreeItem({
 				<span
 					aria-label="has state"
 					title="Has state"
-					style={{
-						width: 6,
-						height: 6,
-						borderRadius: "50%",
-						background: "var(--primary)",
-						flex: "0 0 auto",
-					}}
+					className="devtools:size-1.5 devtools:shrink-0 devtools:rounded-full devtools:bg-primary"
 				/>
 			) : null}
-			<span
-				style={{
-					marginLeft: "auto",
-					fontSize: 10,
-					color: "var(--muted-foreground, #71717a)",
-					flex: "0 0 auto",
-				}}
-			>
+			<span className="devtools:ml-auto devtools:shrink-0 devtools:text-[10px] devtools:text-muted-foreground">
 				{node.kind}
 			</span>
 		</div>

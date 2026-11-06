@@ -1,5 +1,6 @@
 import {
 	Button,
+	Checkbox,
 	Dialog,
 	DialogContent,
 	DialogDescription,
@@ -69,15 +70,8 @@ export function GraphLayoutSettings({
 					</DialogDescription>
 				</DialogHeader>
 
-				<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-					<div
-						style={{
-							display: "flex",
-							flexDirection: "column",
-							gap: 4,
-							fontSize: 12,
-						}}
-					>
+				<div className="devtools:flex devtools:flex-col devtools:gap-2.5">
+					<div className="devtools:flex devtools:flex-col devtools:gap-1 devtools:text-xs">
 						Quality
 						<Select
 							value={draft.quality}
@@ -98,18 +92,11 @@ export function GraphLayoutSettings({
 							return (
 								<div
 									key={key}
-									style={{ display: "flex", flexDirection: "column", gap: 4 }}
+									className="devtools:flex devtools:flex-col devtools:gap-1"
 								>
-									<div
-										style={{
-											display: "flex",
-											alignItems: "center",
-											justifyContent: "space-between",
-											fontSize: 12,
-										}}
-									>
+									<div className="devtools:flex devtools:items-center devtools:justify-between devtools:text-xs">
 										<span>{bounds.label}</span>
-										<span style={{ color: "var(--muted-foreground)" }}>
+										<span className="devtools:font-mono devtools:tabular-nums devtools:text-muted-foreground">
 											{draft[key].toFixed(
 												key === "edgeElasticity" || key === "gravity" ? 2 : 0,
 											)}
@@ -122,9 +109,7 @@ export function GraphLayoutSettings({
 										value={draft[key]}
 										onValueChange={(value) => update(key, Number(value))}
 									/>
-									<span
-										style={{ fontSize: 10, color: "var(--muted-foreground)" }}
-									>
+									<span className="devtools:text-[10px] devtools:text-muted-foreground">
 										{bounds.hint}
 									</span>
 								</div>
@@ -132,32 +117,17 @@ export function GraphLayoutSettings({
 						},
 					)}
 
-					<label
-						style={{
-							display: "flex",
-							alignItems: "center",
-							gap: 6,
-							fontSize: 12,
-						}}
-					>
-						<input
-							type="checkbox"
+					<label className="devtools:flex devtools:items-center devtools:gap-1.5 devtools:text-xs">
+						<Checkbox
 							checked={draft.animate}
-							onChange={(event) => update("animate", event.target.checked)}
+							onCheckedChange={(checked) => update("animate", checked === true)}
+							aria-label="Animate layout"
 						/>
 						Animate layout
 					</label>
 
 					{issues.length > 0 ? (
-						<div
-							style={{
-								display: "flex",
-								flexDirection: "column",
-								gap: 2,
-								fontSize: 12,
-								color: "var(--destructive, #dc2626)",
-							}}
-						>
+						<div className="devtools:flex devtools:flex-col devtools:gap-0.5 devtools:text-xs devtools:text-destructive">
 							{issues.map((issue) => (
 								<span key={issue.message}>
 									{issue.level === "error" ? "Error: " : "Warning: "}

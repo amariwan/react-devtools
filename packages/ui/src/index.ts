@@ -8,6 +8,7 @@ export * from "./helpers/fuzzy.js";
 export * from "./helpers/tree.js";
 export * from "./helpers/geometry.js";
 export * from "./helpers/prefs.js";
+export * from "./helpers/panel-catalog.js";
 export * from "./helpers/shell-affordances.js";
 export * from "./helpers/universal-search.js";
 // Utilities
@@ -37,6 +38,7 @@ export * from "./components/ui/scroll-area.js";
 export * from "./components/ui/select.js";
 export * from "./components/ui/separator.js";
 export * from "./components/ui/sheet.js";
+export * from "./components/ui/sidebar.js";
 export * from "./components/ui/skeleton.js";
 export * from "./components/ui/slider.js";
 export * from "./components/ui/table.js";
@@ -47,10 +49,12 @@ export * from "./components/ui/toggle.js";
 export * from "./components/ui/toggle-group.js";
 export * from "./components/ui/tooltip.js";
 // Composite components
+export * from "./components/action-icons.js";
 export * from "./components/panel-icon.js";
 export * from "./components/primitives.js";
 export * from "./components/element-picker.js";
 export * from "./components/store-inspector.js";
+export * from "./components/encoded-value-branch.js";
 // Shell
 export * from "./shell/shell.js";
 // Provider

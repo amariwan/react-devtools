@@ -49,6 +49,7 @@ export default function GraphPanel({ registry }: { registry: PluginRegistry }) {
 	const [selectedNodeId, setSelectedNodeId] = React.useState<string | null>(
 		null,
 	);
+	const containerRef = React.useRef<HTMLDivElement | null>(null);
 
 	const graphData = useGraphData({
 		service,
@@ -70,12 +71,12 @@ export default function GraphPanel({ registry }: { registry: PluginRegistry }) {
 		setSelectedNodeId(null);
 	}, [graphData.view.nodes, selectedNodeId]);
 
-	const themeContainerRef = React.useRef<HTMLDivElement | null>(null);
-	const theme = useGraphTheme(themeContainerRef);
+	const theme = useGraphTheme(containerRef);
 
 	const stylesheet = React.useMemo(() => buildGraphStylesheet(theme), [theme]);
 
 	const controller = useCytoscape({
+		containerRef,
 		nodes: graphData.view.nodes,
 		edges: graphData.view.edges,
 		stylesheet,
@@ -89,12 +90,6 @@ export default function GraphPanel({ registry }: { registry: PluginRegistry }) {
 		onNodeSelect: (id) => setSelectedNodeId(id),
 		onBackgroundSelect: () => setSelectedNodeId(null),
 	});
-
-	const containerRef = controller.containerRef;
-
-	React.useEffect(() => {
-		themeContainerRef.current = containerRef.current;
-	}, [containerRef.current]);
 
 	const focusComponent = React.useCallback(() => {
 		if (graphData.rootComponentId) {
@@ -127,8 +122,49 @@ export default function GraphPanel({ registry }: { registry: PluginRegistry }) {
 		setQuery("");
 	}, []);
 
-	const rootLabel = graphData.view.rootLabel;
+	const rootLabel =
+		graphData.view.rootLabel ??
+		graphData.snapshot.data.tree.find(
+			(node) => node.id === graphData.rootComponentId,
+		)?.displayName ??
+		(graphData.rootComponentId ? "Selected component" : undefined);
 	const nodeCount = graphData.view.nodeCount;
+	const hasSelectedNode =
+		selectedNodeId !== null &&
+		graphData.view.nodes.some((node) => node.id === selectedNodeId);
+	const showInlineEmptyState =
+		graphData.view.status === "empty" &&
+		Boolean(graphData.view.rootComponentId) &&
+		graphData.dependenciesCapable &&
+		graphData.loaded &&
+		!graphData.loading &&
+		graphData.runtimeStatus !== "error" &&
+		graphData.runtimeStatus !== "unavailable" &&
+		!graphData.dependencyError;
+	const showGraphStateOverlay =
+		graphData.loading ||
+		graphData.runtimeStatus === "error" ||
+		graphData.runtimeStatus === "unavailable" ||
+		Boolean(graphData.dependencyError) ||
+		graphData.view.status === "unavailable" ||
+		graphData.view.status === "unsupported" ||
+		(graphData.view.status === "empty" && !showInlineEmptyState);
+	const graphState = (
+		<GraphStates
+			view={graphData.view}
+			runtimeStatus={graphData.runtimeStatus}
+			dependenciesCapable={graphData.dependenciesCapable}
+			dependencySetLoaded={graphData.loaded}
+			loading={graphData.loading}
+			{...(graphData.dependencyError
+				? { dependencyError: graphData.dependencyError }
+				: {})}
+			onReload={graphData.reload}
+			onResetFilters={resetFilters}
+			hiddenByKind={graphData.view.hiddenByKind}
+			compact={showInlineEmptyState}
+		/>
+	);
 
 	React.useEffect(() => {
 		if (fullscreen && typeof document !== "undefined") {
@@ -141,27 +177,17 @@ export default function GraphPanel({ registry }: { registry: PluginRegistry }) {
 		return undefined;
 	}, [fullscreen]);
 
-	const wrapperStyle: React.CSSProperties = fullscreen
-		? {
-				position: "fixed",
-				inset: 0,
-				zIndex: 9999,
-				background: "var(--background, #0e0e10)",
-				display: "flex",
-				flexDirection: "column",
-			}
-		: {
-				display: "flex",
-				flexDirection: "column",
-				height: "100%",
-				minHeight: 0,
-			};
-
 	return (
-		<div ref={themeContainerRef} style={wrapperStyle}>
+		<div
+			className={
+				fullscreen
+					? "devtools:fixed devtools:inset-0 devtools:z-[9999] devtools:flex devtools:flex-col devtools:bg-background"
+					: "devtools:flex devtools:h-full devtools:min-h-0 devtools:flex-col"
+			}
+		>
 			<PanelHeader
 				title="Graph"
-				description="Reactive dependencies of the selected component. Component hierarchy is never shown."
+				description="Dependencies of the selected component"
 				actions={
 					<Badge variant="secondary">
 						{rootLabel ? rootLabel : "No selection"} · {nodeCount} nodes
@@ -197,80 +223,48 @@ export default function GraphPanel({ registry }: { registry: PluginRegistry }) {
 				onEdgeKindsChange={setEdgeKinds}
 			/>
 			{graphData.view.nodeLimitReached ? (
-				<div
-					style={{
-						padding: "4px 10px",
-						fontSize: 11,
-						color: "var(--warning, #d97706)",
-						borderBottom: "1px solid var(--border, rgba(127,127,127,0.25))",
-					}}
-				>
+				<div className="devtools:border-b devtools:border-border devtools:px-2.5 devtools:py-1 devtools:text-[11px] devtools:text-warning">
 					Node limit reached ({nodeLimit}). Lower-priority nodes are hidden.
 				</div>
 			) : null}
 			<div
-				style={{
-					display: "grid",
-					gridTemplateColumns: fullscreen ? "1fr 320px" : "1fr 280px",
-					gap: 0,
-					flex: 1,
-					minHeight: 0,
-					overflow: "hidden",
-				}}
+				className={`devtools-graph-layout devtools:grid devtools:min-h-0 devtools:flex-1 devtools:overflow-hidden devtools:@max-[640px]/devtools:grid-cols-[minmax(0,1fr)] ${hasSelectedNode ? "devtools:@max-[640px]/devtools:grid-rows-[minmax(180px,1fr)_auto]" : ""} ${hasSelectedNode ? (fullscreen ? "devtools:grid-cols-[minmax(0,1fr)_320px]" : "devtools:grid-cols-[minmax(0,1fr)_280px]") : "devtools:grid-cols-[minmax(0,1fr)]"}`}
 			>
-				<div
-					style={{
-						display: "flex",
-						flexDirection: "column",
-						minHeight: 0,
-						overflow: "hidden",
-					}}
-				>
-					<GraphCanvas
-						controller={controller}
-						theme={theme}
-						view={graphData.view}
-						containerRef={containerRef}
-						onNodeSelect={(id) => setSelectedNodeId(id)}
-						onBackgroundSelect={() => setSelectedNodeId(null)}
-						height={
-							fullscreen
-								? Math.max(
-										320,
-										(typeof window !== "undefined" ? window.innerHeight : 600) -
-											140,
-									)
-								: 420
-						}
-					/>
-					<GraphStates
-						view={graphData.view}
-						runtimeStatus={graphData.runtimeStatus}
-						dependenciesCapable={graphData.dependenciesCapable}
-						dependencySetLoaded={graphData.loaded}
-						loading={graphData.loading}
-						{...(graphData.dependencyError
-							? { dependencyError: graphData.dependencyError }
-							: {})}
-						onReload={graphData.reload}
-						onResetFilters={resetFilters}
-						hiddenByKind={graphData.view.hiddenByKind}
-					/>
-					<GraphLegend theme={theme} visibleKinds={nodeKinds} />
+				<div className="devtools:flex devtools:min-h-0 devtools:flex-col devtools:overflow-hidden">
+					<div className="devtools-graph-viewport devtools:relative devtools:min-h-[220px] devtools:flex-1 devtools:overflow-hidden devtools:@max-[640px]/devtools:min-h-[180px]">
+						<GraphCanvas
+							controller={controller}
+							theme={theme}
+							view={graphData.view}
+							containerRef={containerRef}
+							selectedNodeId={selectedNodeId}
+							onNodeSelect={(id) => setSelectedNodeId(id)}
+						/>
+						{nodeCount > 0 && !hasSelectedNode ? (
+							<div className="devtools:pointer-events-none devtools:absolute devtools:right-2 devtools:top-2 devtools:max-w-[220px] devtools:rounded-md devtools:border devtools:border-border devtools:bg-background/90 devtools:px-2 devtools:py-1.5 devtools:text-xs devtools:text-muted-foreground">
+								Select a node to inspect its reactive metadata
+							</div>
+						) : null}
+						{showGraphStateOverlay ? (
+							<div className="devtools:pointer-events-none devtools:absolute devtools:inset-0 devtools:grid devtools:place-items-center devtools:p-4">
+								<div className="devtools:pointer-events-auto devtools:w-full devtools:max-w-[420px]">
+									{graphState}
+								</div>
+							</div>
+						) : null}
+					</div>
+					{showInlineEmptyState ? graphState : null}
+					<GraphLegend theme={theme} nodes={graphData.view.nodes} />
 				</div>
-				<div
-					style={{
-						borderLeft: "1px solid var(--border, rgba(127,127,127,0.25))",
-						overflow: "auto",
-						minHeight: 0,
-					}}
-				>
-					<GraphNodeInspector
-						view={graphData.view}
-						selectedNodeId={selectedNodeId}
-						onSelectNode={(id) => setSelectedNodeId(id)}
-					/>
-				</div>
+				{hasSelectedNode ? (
+					<div className="devtools-graph-inspector devtools:min-h-0 devtools:overflow-auto devtools:border-l devtools:border-border devtools:@max-[640px]/devtools:max-h-[180px] devtools:@max-[640px]/devtools:border-t devtools:@max-[640px]/devtools:border-l-0">
+						<GraphNodeInspector
+							view={graphData.view}
+							selectedNodeId={selectedNodeId}
+							onSelectNode={(id) => setSelectedNodeId(id)}
+						/>
+					</div>
+				) : null}
 			</div>
 			<GraphLayoutSettings
 				open={settingsOpen}

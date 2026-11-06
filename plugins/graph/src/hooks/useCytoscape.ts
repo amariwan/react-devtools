@@ -7,6 +7,7 @@ import {
 	type GraphLayoutName,
 	buildLayoutOptions,
 	seededPosition,
+	shouldHideGraphLabels,
 } from "../lib/graph-layout.js";
 import type { GraphEdgeView, GraphNodeView } from "../lib/graph-model.js";
 
@@ -28,6 +29,7 @@ function registerExtensions(): void {
 }
 
 export interface UseCytoscapeInput {
+	readonly containerRef?: React.RefObject<HTMLDivElement | null>;
 	readonly nodes: readonly GraphNodeView[];
 	readonly edges: readonly GraphEdgeView[];
 	readonly stylesheet: cytoscape.StylesheetJson;
@@ -45,14 +47,19 @@ export interface UseCytoscapeInput {
 export interface CytoscapeController {
 	readonly containerRef: React.RefObject<HTMLDivElement | null>;
 	readonly ready: boolean;
+	readonly layoutPending: boolean;
+	readonly layoutDurationMs: number | null;
 	readonly fit: () => void;
 	readonly zoomTo: (id: string) => void;
 	readonly runLayout: () => void;
 	readonly resetView: () => void;
 }
 
-const FIT_PADDING = 44;
+const DEFAULT_FIT_PADDING = 44;
+const COMPACT_FIT_PADDING = 16;
+const COMPACT_CANVAS_WIDTH = 480;
 const SELECTION_ZOOM = 1.2;
+const SMALL_GRAPH_MAX_FIT_ZOOM = 1.25;
 
 /**
  * Owns the Cytoscape instance lifecycle. Elements are diffed by stable id so a
@@ -75,9 +82,17 @@ export function useCytoscape(input: UseCytoscapeInput): CytoscapeController {
 		onBackgroundSelect,
 	} = input;
 
-	const containerRef = React.useRef<HTMLDivElement | null>(null);
+	const ownedContainerRef = React.useRef<HTMLDivElement | null>(null);
+	const containerRef = input.containerRef ?? ownedContainerRef;
 	const cyRef = React.useRef<cytoscape.Core | null>(null);
 	const [ready, setReady] = React.useState(false);
+	const [layoutPending, setLayoutPending] = React.useState(false);
+	const [layoutDurationMs, setLayoutDurationMs] = React.useState<number | null>(
+		null,
+	);
+	const layoutRunIdRef = React.useRef(0);
+	const denseLabelsHiddenRef = React.useRef(false);
+	const syncGraphLabelsRef = React.useRef<() => void>(() => undefined);
 
 	const initialStylesheet = React.useRef(stylesheet);
 	initialStylesheet.current = stylesheet;
@@ -111,6 +126,14 @@ export function useCytoscape(input: UseCytoscapeInput): CytoscapeController {
 			maxZoom: 4,
 		});
 		cyRef.current = cy;
+		const syncGraphLabels = () => {
+			const hideLabels = shouldHideGraphLabels(cy.nodes().length, cy.zoom());
+			if (denseLabelsHiddenRef.current === hideLabels) return;
+			denseLabelsHiddenRef.current = hideLabels;
+			cy.batch(() => cy.nodes().toggleClass("labels-hidden", hideLabels));
+		};
+		syncGraphLabelsRef.current = syncGraphLabels;
+		cy.on("zoom", syncGraphLabels);
 
 		cy.on("tap", "node", (event) => {
 			callbacksRef.current.onNodeSelect(event.target.id() as string);
@@ -129,10 +152,30 @@ export function useCytoscape(input: UseCytoscapeInput): CytoscapeController {
 			applyHighlight(cy, selectedRef.current);
 		});
 
+		let previousSize = {
+			width: container.clientWidth,
+			height: container.clientHeight,
+		};
 		const resizeObserver =
 			typeof ResizeObserver !== "undefined"
 				? new ResizeObserver(() => {
+						const nextSize = {
+							width: container.clientWidth,
+							height: container.clientHeight,
+						};
 						cy.resize();
+						if (cy.nodes().length > 0) {
+							cy.panBy({
+								x: (nextSize.width - previousSize.width) / 2,
+								y: (nextSize.height - previousSize.height) / 2,
+							});
+							const crossedCompactBreakpoint =
+								previousSize.width < COMPACT_CANVAS_WIDTH !==
+								nextSize.width < COMPACT_CANVAS_WIDTH;
+							if (crossedCompactBreakpoint || graphExceedsViewport(cy))
+								fitGraphImmediately(cy);
+						}
+						previousSize = nextSize;
 					})
 				: null;
 		resizeObserver?.observe(container);
@@ -141,7 +184,13 @@ export function useCytoscape(input: UseCytoscapeInput): CytoscapeController {
 
 		return () => {
 			resizeObserver?.disconnect();
+			cy.off("zoom", syncGraphLabels);
+			syncGraphLabelsRef.current = () => undefined;
+			denseLabelsHiddenRef.current = false;
+			layoutRunIdRef.current += 1;
+			setLayoutPending(false);
 			setReady(false);
+			didRunInitialLayoutRef.current = false;
 			cyRef.current = null;
 			cy.destroy();
 		};
@@ -248,6 +297,7 @@ export function useCytoscape(input: UseCytoscapeInput): CytoscapeController {
 			applyHighlight(cy, selectedRef.current);
 			if (showEdgeLabelsRef.current) cy.edges().addClass("show-labels");
 		});
+		syncGraphLabelsRef.current();
 
 		topologyRef.current = [...nodeIds].sort().join("|");
 	}, [nodes, edges]);
@@ -269,6 +319,7 @@ export function useCytoscape(input: UseCytoscapeInput): CytoscapeController {
 	const layoutConfigKey = `${layoutName}|${JSON.stringify(fcoseSettings)}|${layoutNonce}`;
 	const layoutConfigRef = React.useRef(layoutConfigKey);
 	const rootRef = React.useRef<string | undefined>(rootId);
+	const didRunInitialLayoutRef = React.useRef(false);
 
 	const depthById = React.useMemo(() => {
 		const map = new Map<string, number>();
@@ -280,6 +331,10 @@ export function useCytoscape(input: UseCytoscapeInput): CytoscapeController {
 		(fitAfter: boolean) => {
 			const cy = cyRef.current;
 			if (!cy || cy.nodes().length === 0) return;
+			const runId = ++layoutRunIdRef.current;
+			const startedAt = performance.now();
+			setLayoutPending(true);
+			setLayoutDurationMs(null);
 			const layout = cy.layout(
 				buildLayoutOptions({
 					name: layoutName,
@@ -287,39 +342,43 @@ export function useCytoscape(input: UseCytoscapeInput): CytoscapeController {
 					animate,
 					nodeCount: nodes.length,
 					fit: false,
-					padding: FIT_PADDING,
+					padding: getFitPadding(cy),
 					...(rootId ? { rootId } : {}),
 					depthById,
 				}),
 			);
+			layout.one("layoutstop", () => {
+				if (runId !== layoutRunIdRef.current || cyRef.current !== cy) return;
+				const durationMs = performance.now() - startedAt;
+				const finish = () => {
+					if (runId !== layoutRunIdRef.current || cyRef.current !== cy) return;
+					setLayoutDurationMs(durationMs);
+					setLayoutPending(false);
+				};
+				if (fitAfter) {
+					void fitGraphToViewport(cy, animate ? 240 : 0).then(finish);
+					return;
+				}
+				finish();
+			});
 			layout.run();
-			if (!fitAfter) return;
-			const doFit = () => {
-				if (!cyRef.current) return;
-				cy.animate(
-					{ fit: { eles: cy.elements(), padding: FIT_PADDING } },
-					{ duration: animate ? 240 : 0, easing: "ease-out" },
-				);
-			};
-			if (animate && nodes.length <= 320) {
-				layout.one("layoutstop", doFit);
-			} else {
-				doFit();
-			}
 		},
 		[layoutName, fcoseSettings, animate, nodes.length, rootId, depthById],
 	);
 
 	React.useEffect(() => {
 		const cy = cyRef.current;
-		if (!cy) return;
+		if (!cy || nodes.length === 0) return;
 		const rootChanged = rootRef.current !== rootId;
 		const configChanged = layoutConfigRef.current !== layoutConfigKey;
-		const isFirstTopology = topologyRef.current === "";
 		rootRef.current = rootId;
 		layoutConfigRef.current = layoutConfigKey;
 
-		if (isFirstTopology) return;
+		if (!didRunInitialLayoutRef.current) {
+			didRunInitialLayoutRef.current = true;
+			runLayout(true);
+			return;
+		}
 		if (rootChanged || configChanged) {
 			runLayout(true);
 		}
@@ -331,10 +390,7 @@ export function useCytoscape(input: UseCytoscapeInput): CytoscapeController {
 		if (!cy) return;
 		const elements = cy.elements();
 		if (elements.length === 0) return;
-		cy.animate(
-			{ fit: { eles: elements, padding: FIT_PADDING } },
-			{ duration: 220, easing: "ease-out" },
-		);
+		fitGraphToViewport(cy, 220);
 	}, []);
 
 	const zoomTo = React.useCallback((id: string) => {
@@ -362,11 +418,65 @@ export function useCytoscape(input: UseCytoscapeInput): CytoscapeController {
 	return {
 		containerRef,
 		ready,
+		layoutPending,
+		layoutDurationMs,
 		fit,
 		zoomTo,
 		runLayout: runLayoutNow,
 		resetView,
 	};
+}
+
+function fitGraphToViewport(
+	cy: cytoscape.Core,
+	duration: number,
+): Promise<void> {
+	const elements = cy.elements();
+	if (elements.length === 0) return Promise.resolve();
+
+	if (cy.nodes().length <= 3) {
+		fitGraphImmediately(cy);
+		return Promise.resolve();
+	}
+	if (duration <= 0) {
+		fitGraphImmediately(cy);
+		return Promise.resolve();
+	}
+
+	return cy
+		.animation({
+			fit: { eles: elements, padding: getFitPadding(cy) },
+			duration,
+			easing: "ease-out",
+		})
+		.play()
+		.promise("complete")
+		.then(() => undefined);
+}
+
+function fitGraphImmediately(cy: cytoscape.Core): void {
+	const elements = cy.elements();
+	if (elements.length === 0) return;
+	cy.fit(elements, getFitPadding(cy));
+	if (cy.nodes().length <= 3 && cy.zoom() > SMALL_GRAPH_MAX_FIT_ZOOM)
+		cy.zoom(SMALL_GRAPH_MAX_FIT_ZOOM);
+}
+
+function getFitPadding(cy: cytoscape.Core): number {
+	return cy.width() < COMPACT_CANVAS_WIDTH
+		? COMPACT_FIT_PADDING
+		: DEFAULT_FIT_PADDING;
+}
+
+function graphExceedsViewport(cy: cytoscape.Core): boolean {
+	const bounds = cy.elements().boundingBox({ includeLabels: true });
+	const viewport = cy.extent();
+	return (
+		bounds.x1 < viewport.x1 ||
+		bounds.y1 < viewport.y1 ||
+		bounds.x2 > viewport.x2 ||
+		bounds.y2 > viewport.y2
+	);
 }
 
 function applyHighlight(cy: cytoscape.Core, nodeId: string | undefined): void {

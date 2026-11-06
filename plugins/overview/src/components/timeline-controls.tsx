@@ -1,4 +1,12 @@
-import { Button, Label, Select, Toolbar } from "@next-devtools/ui";
+import {
+	CircleDot,
+	IconButton,
+	Play,
+	Select,
+	Square,
+	Toolbar,
+	Trash2,
+} from "@next-devtools/ui";
 
 type TimelineControlsProps = {
 	available: boolean;
@@ -31,46 +39,58 @@ export function TimelineControls({
 }: TimelineControlsProps) {
 	return (
 		<Toolbar aria-label="Timeline controls">
-			<Label style={{ fontSize: 12 }}>
-				<span style={{ marginRight: 6 }}>Layer</span>
-				<Select
-					aria-label="Timeline layer filter"
-					value={layerFilter}
-					onChange={onLayerFilterChange}
-					options={[
-						{ value: "", label: "All layers" },
-						...layers.map((layer) => ({ value: layer, label: layer })),
-					]}
-				/>
-			</Label>
-			<Button
+			<Select
+				aria-label="Timeline layer filter"
+				value={layerFilter}
+				onChange={onLayerFilterChange}
+				options={[
+					{ value: "", label: "All layers" },
+					...layers.map((layer) => ({ value: layer, label: layer })),
+				]}
+				className="devtools:w-24"
+			/>
+			<IconButton
 				type="button"
+				icon={Play}
+				label="Start recording"
 				disabled={!available || recording}
 				onClick={onStart}
-			>
-				Start recording
-			</Button>
-			<Button
+			/>
+			<IconButton
 				type="button"
+				icon={Square}
+				label="Stop recording"
+				variant="outline"
+				size="icon-sm"
 				disabled={!available || !recording}
 				onClick={onStop}
-			>
-				Stop recording
-			</Button>
-			<Button
+			/>
+			<IconButton
 				type="button"
+				icon={Trash2}
+				label="Clear timeline events"
+				variant="outline"
+				size="icon-sm"
 				disabled={!available || !hasEvents}
 				onClick={onClearEvents}
-			>
-				Clear
-			</Button>
-			<Button type="button" onClick={() => onCaptureBaseline()}>
-				Capture profiler baseline
-			</Button>
+			/>
+			<IconButton
+				type="button"
+				icon={CircleDot}
+				label="Capture profiler baseline"
+				variant="secondary"
+				size="icon-sm"
+				onClick={onCaptureBaseline}
+			/>
 			{hasBaseline && (
-				<Button type="button" onClick={() => onClearBaseline()}>
-					Clear baseline
-				</Button>
+				<IconButton
+					type="button"
+					icon={Trash2}
+					label="Clear profiler baseline"
+					variant="ghost"
+					size="icon-sm"
+					onClick={onClearBaseline}
+				/>
 			)}
 		</Toolbar>
 	);

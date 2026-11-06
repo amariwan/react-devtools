@@ -11,7 +11,7 @@ export function PickedElementStatus({
 }: PickedElementStatusProps) {
 	if (!tag) return null;
 	return (
-		<div style={{ fontSize: 11, color: "var(--muted-foreground, #71717a)" }}>
+		<div className="devtools:text-[11px] devtools:text-muted-foreground">
 			Picked {tag}
 			{sourceOrigin ? ` · source: ${sourceOrigin}` : ""}
 			{sourceRole ? ` · ${sourceRole}` : ""}

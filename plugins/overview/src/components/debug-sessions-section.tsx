@@ -1,5 +1,12 @@
 import type { compareDebugSessions } from "@next-devtools/core";
-import { Button, Checkbox, Label } from "@next-devtools/ui";
+import {
+	Checkbox,
+	CircleDot,
+	Download,
+	IconButton,
+	Label,
+	Trash2,
+} from "@next-devtools/ui";
 
 type DebugSessionsSectionProps = {
 	shared: boolean;
@@ -21,44 +28,48 @@ export function DebugSessionsSection({
 	onClear,
 }: DebugSessionsSectionProps) {
 	return (
-		<section
-			style={{
-				border: "1px solid var(--border, #e4e4e7)",
-				borderRadius: 6,
-				padding: 10,
-			}}
-		>
-			<h3 style={{ fontSize: 13, margin: "0 0 6px" }}>Debug sessions</h3>
-			<p
-				style={{
-					fontSize: 11,
-					color: "var(--muted-foreground, #71717a)",
-					margin: "0 0 8px",
-				}}
-			>
+		<section className="devtools:rounded-md devtools:border devtools:border-border devtools:p-2.5">
+			<h3 className="devtools:mb-1.5 devtools:text-sm devtools:font-semibold">
+				Debug sessions
+			</h3>
+			<p className="devtools:mb-2 devtools:text-[11px] devtools:text-muted-foreground">
 				Capture bounded, sanitized evidence from the current runtime view and
 				compare the two most recent captures.
 			</p>
-			<div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-				<Label style={{ fontSize: 12, display: "flex", gap: 5 }}>
+			<div className="devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-2">
+				<Label className="devtools:flex devtools:items-center devtools:gap-1.5 devtools:text-xs">
 					<Checkbox checked={shared} onCheckedChange={onSharedChange} />
 					Share across tabs
 				</Label>
-				<Button type="button" onClick={onCapture}>
-					Capture debug session
-				</Button>
-				<Button type="button" onClick={onExport} disabled={sessionCount === 0}>
-					Export latest session
-				</Button>
-				<Button type="button" onClick={onClear} disabled={sessionCount === 0}>
-					Clear sessions
-				</Button>
+				<IconButton
+					type="button"
+					icon={CircleDot}
+					label="Capture debug session"
+					variant="secondary"
+					onClick={onCapture}
+				/>
+				<IconButton
+					type="button"
+					icon={Download}
+					label="Export latest session"
+					variant="outline"
+					onClick={onExport}
+					disabled={sessionCount === 0}
+				/>
+				<IconButton
+					type="button"
+					icon={Trash2}
+					label="Clear sessions"
+					variant="ghost"
+					onClick={onClear}
+					disabled={sessionCount === 0}
+				/>
 			</div>
-			<div style={{ fontSize: 11, marginTop: 8 }}>
+			<div className="devtools:mt-2 devtools:text-[11px] devtools:text-muted-foreground">
 				{sessionCount} debug session{sessionCount === 1 ? "" : "s"} captured
 			</div>
 			{comparison && (
-				<p style={{ fontSize: 11, margin: "6px 0 0" }}>
+				<p className="devtools:mt-1.5 devtools:text-[11px]">
 					Debug session comparison: {comparison.timelineDelta >= 0 ? "+" : ""}
 					{comparison.timelineDelta} timeline events ·{" "}
 					{comparison.networkDelta >= 0 ? "+" : ""}

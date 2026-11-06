@@ -53,6 +53,12 @@ export async function detectTanStackQuery(): Promise<boolean> {
 export async function detectTailwindCss(): Promise<boolean> {
 	if (await tryImport("tailwindcss")) return true;
 	if (typeof document !== "undefined") {
+		if (
+			document.styleSheets.length > 0 ||
+			document.querySelector("style,link[rel='stylesheet']") !== null
+		) {
+			return true;
+		}
 		return (
 			document.querySelector(
 				"[class*='flex'],[class*='grid'],[class*='p-'],[class*='m-']",

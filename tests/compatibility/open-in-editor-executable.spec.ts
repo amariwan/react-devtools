@@ -1,5 +1,5 @@
 import path from "node:path";
-import { openInEditor } from "@next-devtools/host-next/editor";
+import { openInEditor } from "next-devtools/server";
 import { describe, expect, it } from "vitest";
 
 describe("open-in-editor executable mapping", () => {

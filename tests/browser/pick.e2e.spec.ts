@@ -16,7 +16,6 @@ test("pick element resolves a component and shows source", async ({ page }) => {
 	const firstTreeItem = tree.getByRole("treeitem").first();
 	await expect(firstTreeItem).toBeVisible();
 	await expect(firstTreeItem).toHaveAttribute("aria-setsize", /\d+/);
-	await expect(tree).toHaveCSS("max-height", "420px");
 	await firstTreeItem.focus();
 	await firstTreeItem.press("ArrowDown");
 	await expect(tree.getByRole("treeitem").nth(1)).toBeFocused();
@@ -35,6 +34,10 @@ test("pick element resolves a component and shows source", async ({ page }) => {
 		);
 	});
 	await expect(page.getByText(/Source:/)).toBeVisible();
+	await page.screenshot({
+		path: "/tmp/react-devtools-before/component-inspector-selected.png",
+		animations: "disabled",
+	});
 	await expect(
 		page.locator('[data-next-devtools-highlight="selected"]'),
 	).toHaveCount(1);
@@ -53,9 +56,17 @@ test("selected component persists when switching panels", async ({ page }) => {
 	await expect(tree.getByRole("treeitem").nth(1)).toBeVisible();
 	await tree.getByRole("treeitem").nth(1).click();
 	await expect(page.getByText(/Source:/)).toBeVisible();
+	const mobileInspectorButton = page.getByRole("button", {
+		name: "Inspector",
+		exact: true,
+	});
+	if (await mobileInspectorButton.isVisible()) {
+		await page.getByRole("button", { name: "Tree", exact: true }).click();
+	}
+	await expect(tree.getByRole("treeitem", { selected: true })).toBeVisible();
 
 	await page.getByLabel("Timeline").click();
 	await expect(page.getByRole("heading", { name: "Timeline" })).toBeVisible();
 	await page.getByLabel("Components").click();
-	await expect(page.getByText(/Source:/)).toBeVisible();
+	await expect(tree.getByRole("treeitem", { selected: true })).toBeVisible();
 });

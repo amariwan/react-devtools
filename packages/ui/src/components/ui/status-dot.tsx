@@ -8,13 +8,13 @@ import {
 import { cn } from "../../lib/utils.js";
 
 const STATUS_DOT_CLASSES: Record<StatusTone, string> = {
-	available: "devtools:bg-green-600 devtools:dark:bg-green-500",
-	partial: "devtools:bg-amber-600 devtools:dark:bg-amber-500",
-	"requires-instrumentation": "devtools:bg-blue-600 devtools:dark:bg-blue-500",
+	available: "devtools:bg-success",
+	partial: "devtools:bg-warning",
+	"requires-instrumentation": "devtools:bg-info",
 	experimental: "devtools:bg-violet-600 devtools:dark:bg-violet-500",
-	unavailable: "devtools:bg-red-600 devtools:dark:bg-red-500",
-	error: "devtools:bg-red-600 devtools:dark:bg-red-500",
-	diagnostic: "devtools:bg-red-500 devtools:dark:bg-red-500",
+	unavailable: "devtools:bg-destructive",
+	error: "devtools:bg-destructive",
+	diagnostic: "devtools:bg-destructive",
 };
 
 export interface StatusDotProps {

@@ -1,4 +1,21 @@
-import { Button, SearchField, Select } from "@next-devtools/ui";
+import {
+	Checkbox,
+	Download,
+	Expand,
+	Focus,
+	IconButton,
+	Maximize,
+	Minimize,
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+	RotateCcw,
+	SearchField,
+	Select,
+	Settings2,
+	Toolbar,
+	Workflow,
+} from "@next-devtools/ui";
 import type { GraphLayoutName } from "../lib/graph-layout.js";
 import { GRAPH_LAYOUTS } from "../lib/graph-layout.js";
 
@@ -48,108 +65,134 @@ export function GraphToolbar({
 	nodeCount,
 }: GraphToolbarProps) {
 	return (
-		<div
-			style={{
-				display: "flex",
-				flexWrap: "wrap",
-				gap: 6,
-				alignItems: "center",
-				padding: "6px 8px",
-				borderBottom: "1px solid var(--border, rgba(127,127,127,0.25))",
-			}}
+		<Toolbar
+			aria-label="Graph controls"
+			role="group"
+			className="devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-2 devtools:border-b devtools:border-border devtools:px-3 devtools:py-2"
 		>
 			<SearchField
 				value={query}
 				onChange={onQueryChange}
 				placeholder="Search nodes…"
 				aria-label="Graph node search"
-				style={{ minWidth: 160, flex: "1 1 180px" }}
+				className="devtools:min-w-40 devtools:flex-[1_1_180px]"
 			/>
-			<Select
-				value={layoutName}
-				onChange={(value) => onLayoutChange(value as GraphLayoutName)}
-				options={GRAPH_LAYOUTS.map((layout) => ({
-					value: layout.value,
-					label: layout.label,
-				}))}
-				aria-label="Graph layout"
-			/>
-			<span
-				style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11 }}
-			>
-				Depth
-				<Select
-					value={String(depth)}
-					onChange={(value) => onDepthChange(Number(value))}
-					options={[
-						{ value: "1", label: "1" },
-						{ value: "2", label: "2" },
-						{ value: "3", label: "3" },
-					]}
-					aria-label="Graph depth"
+			<Popover>
+				<PopoverTrigger
+					render={
+						<IconButton
+							icon={Settings2}
+							label="View options"
+							variant="outline"
+						/>
+					}
 				/>
-			</span>
-			<label
-				style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11 }}
+				<PopoverContent className="devtools:w-64 devtools:max-w-[calc(100vw-2rem)] devtools:p-2">
+					<div
+						aria-label="Graph layout and scope"
+						role="group"
+						className="devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-2"
+					>
+						<Select
+							value={layoutName}
+							onChange={(value) => onLayoutChange(value as GraphLayoutName)}
+							options={GRAPH_LAYOUTS.map((layout) => ({
+								value: layout.value,
+								label: layout.label,
+							}))}
+							aria-label="Graph layout"
+						/>
+						<label className="devtools:flex devtools:items-center devtools:gap-1.5 devtools:text-xs">
+							Depth
+							<Select
+								value={String(depth)}
+								onChange={(value) => onDepthChange(Number(value))}
+								options={[
+									{ value: "1", label: "1" },
+									{ value: "2", label: "2" },
+									{ value: "3", label: "3" },
+								]}
+								aria-label="Graph depth"
+							/>
+						</label>
+					</div>
+					<div
+						aria-label="Graph display options"
+						role="group"
+						className="devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-2"
+					>
+						<label className="devtools:flex devtools:items-center devtools:gap-1.5 devtools:text-xs">
+							<Checkbox
+								checked={animate}
+								onCheckedChange={onAnimateChange}
+								aria-label="Animate layout"
+							/>
+							Animate layout
+						</label>
+						<label className="devtools:flex devtools:items-center devtools:gap-1.5 devtools:text-xs">
+							<Checkbox
+								checked={showEdgeLabels}
+								onCheckedChange={onShowEdgeLabelsChange}
+								aria-label="Edge labels"
+							/>
+							Edge labels
+						</label>
+					</div>
+				</PopoverContent>
+			</Popover>
+			<div
+				aria-label="Graph view actions"
+				role="group"
+				className="devtools:flex devtools:flex-wrap devtools:items-center devtools:gap-1"
 			>
-				<input
-					type="checkbox"
-					checked={animate}
-					onChange={(event) => onAnimateChange(event.target.checked)}
+				<IconButton
+					icon={Expand}
+					label="Fit graph to view"
+					variant="outline"
+					onClick={onFit}
+					disabled={loading || nodeCount === 0}
 				/>
-				Animate
-			</label>
-			<label
-				style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11 }}
-			>
-				<input
-					type="checkbox"
-					checked={showEdgeLabels}
-					onChange={(event) => onShowEdgeLabelsChange(event.target.checked)}
+				<IconButton
+					icon={RotateCcw}
+					label="Reset graph view"
+					variant="outline"
+					onClick={onReset}
+					disabled={loading || nodeCount === 0}
 				/>
-				Labels
-			</label>
-			<Button
-				size="sm"
-				variant="outline"
-				onClick={onFit}
-				disabled={loading || nodeCount === 0}
-			>
-				Fit
-			</Button>
-			<Button
-				size="sm"
-				variant="outline"
-				onClick={onReset}
-				disabled={loading || nodeCount === 0}
-			>
-				Reset
-			</Button>
-			<Button
-				size="sm"
-				variant="outline"
-				onClick={onRunLayout}
-				disabled={loading || nodeCount === 0}
-			>
-				Layout
-			</Button>
-			<Button size="sm" variant="outline" onClick={onFocus} disabled={loading}>
-				Focus
-			</Button>
-			<Button size="sm" variant="outline" onClick={onOpenSettings}>
-				Settings
-			</Button>
-			<Button
-				size="sm"
-				variant="outline"
-				onClick={onExport}
-				disabled={nodeCount === 0}
-			>
-				Export
-			</Button>
-			<Button size="sm" variant="ghost" onClick={onToggleFullscreen}>
-				{fullscreen ? "Exit" : "Fullscreen"}
-			</Button>
-		</div>
+				<IconButton
+					icon={Workflow}
+					label="Run graph layout"
+					variant="outline"
+					onClick={onRunLayout}
+					disabled={loading || nodeCount === 0}
+				/>
+				<IconButton
+					icon={Focus}
+					label="Focus root component"
+					variant="outline"
+					onClick={onFocus}
+					disabled={loading}
+				/>
+				<IconButton
+					icon={Settings2}
+					label="Graph settings"
+					variant="outline"
+					onClick={onOpenSettings}
+				/>
+				<IconButton
+					icon={Download}
+					label="Export graph"
+					variant="outline"
+					onClick={onExport}
+					disabled={nodeCount === 0}
+				/>
+				<IconButton
+					icon={fullscreen ? Minimize : Maximize}
+					label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+					variant="ghost"
+					onClick={onToggleFullscreen}
+				/>
+			</div>
+		</Toolbar>
 	);
 }

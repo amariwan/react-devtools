@@ -40,6 +40,33 @@ describe("component tree data", () => {
 		expect(filterComponentRows(rows, "")).toHaveLength(2);
 	});
 
+	it("keeps ancestors visible and marks matching component rows", () => {
+		const nodes = [
+			{ id: "root", displayName: "Root", parentId: null, childIds: ["app"] },
+			{ id: "app", displayName: "App", parentId: "root", childIds: ["target"] },
+			{
+				id: "target",
+				displayName: "TargetPanel",
+				parentId: "app",
+				childIds: [],
+			},
+			{ id: "other", displayName: "Other", parentId: null, childIds: [] },
+		];
+		const rows = flattenComponentTree(nodes as never);
+		const filtered = filterComponentRows(rows, "target");
+
+		expect(filtered.map(({ node }) => node.id)).toEqual([
+			"root",
+			"app",
+			"target",
+		]);
+		expect(filtered.map(({ matchesQuery }) => matchesQuery)).toEqual([
+			false,
+			false,
+			true,
+		]);
+	});
+
 	it("formats source location", () => {
 		expect(formatSourceLocation({ file: "a.ts", line: 1, column: 2 })).toBe(
 			"a.ts:1:2",

@@ -1,12 +1,17 @@
+import { type EncodedValue, encodeValue } from "@next-devtools/contracts";
 import type {
 	ComponentDetail,
 	ComponentNode,
 } from "@next-devtools/runtime-react";
-import { Button, Select } from "@next-devtools/ui";
 import {
-	formatInspectorValue,
-	formatSourceLocation,
-} from "../component-tree-data.js";
+	EncodedValueBranch,
+	ExternalLink,
+	IconButton,
+	Select,
+	Toolbar,
+} from "@next-devtools/ui";
+import * as React from "react";
+import { formatSourceLocation } from "../component-tree-data.js";
 import { InspectorSection } from "./inspector-section.js";
 
 export type EditorChoice = "vscode" | "cursor";
@@ -40,31 +45,41 @@ export function ComponentInspector({
 	onEditorChange,
 	onOpen,
 }: ComponentInspectorProps) {
+	const [copyStatus, setCopyStatus] = React.useState<string | null>(null);
+	React.useEffect(() => setCopyStatus(null), [selectedId, selectedSource]);
+	const encodedValues = React.useMemo(() => {
+		return {
+			props: encodeValue(selectedDetail?.props ?? {}),
+			hooks: encodeValue(selectedDetail?.hooks ?? []),
+			state: encodeValue(selectedDetail?.state),
+			context: encodeValue(selectedDetail?.context ?? []),
+		};
+	}, [selectedDetail]);
+	const copyValue = async (value: EncodedValue, path: string) => {
+		try {
+			const json = JSON.stringify(value, null, 2);
+			if (json === undefined || !navigator.clipboard?.writeText) {
+				throw new Error("Clipboard access is unavailable.");
+			}
+			await navigator.clipboard.writeText(json);
+			setCopyStatus(`Copied JSON at ${path}.`);
+		} catch {
+			setCopyStatus("Could not copy value. Check clipboard permissions.");
+		}
+	};
 	return (
 		<div
-			className="devtools-component-inspector"
-			style={{
-				flex: "1 1 45%",
-				minWidth: 0,
-				display: "flex",
-				flexDirection: "column",
-				border: "1px solid var(--border, #e4e4e7)",
-				borderRadius: 6,
-			}}
+			role="region"
+			aria-label="Component inspector"
+			className="devtools-component-inspector devtools:flex devtools:min-w-0 devtools:flex-[1_1_45%] devtools:flex-col devtools:overflow-hidden devtools:rounded-md devtools:border devtools:border-border devtools:@max-[760px]/devtools:group-data-[mobile-view=tree]:hidden"
 		>
-			<div
-				style={{
-					padding: 8,
-					borderBottom: "1px solid var(--border, #e4e4e7)",
-					display: "flex",
-					alignItems: "center",
-					gap: 6,
-				}}
-			>
-				<div style={{ fontSize: 12, fontWeight: 600, flex: 1 }}>Inspector</div>
+			<Toolbar className="devtools:flex-nowrap devtools:gap-1.5 devtools:p-2">
+				<h2 className="devtools:m-0 devtools:flex-1 devtools:text-xs devtools:font-semibold">
+					Inspector
+				</h2>
 				{sourceTarget ? (
 					<>
-						<div style={{ width: 92 }}>
+						<div className="devtools:w-[92px]">
 							<Select
 								value={editor}
 								onChange={(value) =>
@@ -74,89 +89,59 @@ export function ComponentInspector({
 								label="Editor"
 							/>
 						</div>
-						<Button type="button" size="sm" onClick={() => void onOpen()}>
-							Open
-						</Button>
+						<IconButton
+							type="button"
+							icon={ExternalLink}
+							label="Open source in editor"
+							onClick={() => void onOpen()}
+						/>
 					</>
 				) : null}
-			</div>
-			<div style={{ overflow: "auto", flex: 1, maxHeight: 420 }}>
+			</Toolbar>
+			<div className="devtools:min-h-0 devtools:max-h-[420px] devtools:flex-1 devtools:overflow-auto">
 				{!selectedId && !selectedSource ? (
-					<div
-						style={{
-							padding: 16,
-							fontSize: 12,
-							color: "var(--muted-foreground, #71717a)",
-							textAlign: "center",
-						}}
-					>
+					<div className="devtools:p-4 devtools:text-center devtools:text-xs devtools:text-muted-foreground">
 						Select a component or pick an element to inspect props, hooks,
 						state, and source.
 					</div>
 				) : (
-					<div style={{ padding: 8, display: "grid", gap: 10 }}>
+					<div className="devtools:grid devtools:gap-2.5 devtools:p-2">
 						{selectedNode ? (
-							<div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-								<strong style={{ fontSize: 13 }}>
+							<div className="devtools:flex devtools:flex-wrap devtools:items-baseline devtools:gap-1.5">
+								<strong className="devtools:text-sm devtools:font-semibold">
 									{selectedNode.displayName}
 								</strong>
-								<span
-									style={{
-										fontSize: 10,
-										color: "var(--muted-foreground, #71717a)",
-									}}
-								>
+								<span className="devtools:text-[10px] devtools:text-muted-foreground">
 									{selectedNode.kind}
 								</span>
 							</div>
 						) : null}
 
-						<div style={{ fontSize: 11 }}>
-							<span style={{ color: "var(--muted-foreground, #71717a)" }}>
-								Source:{" "}
-							</span>
-							<span
-								style={{
-									fontFamily: "monospace",
-									overflowWrap: "anywhere",
-								}}
-							>
+						<div className="devtools:text-[11px]">
+							<span className="devtools:text-muted-foreground">Source: </span>
+							<span className="devtools:break-all devtools:font-mono">
 								{formatSourceLocation(sourceTarget) ?? "Not recorded"}
 							</span>
 						</div>
 						{!sourceTarget ? (
-							<p
-								style={{
-									fontSize: 12,
-									color: "var(--muted-foreground, #71717a)",
-								}}
-							>
-								React did not record a source location. Try Pick element on the
-								page to resolve one.
-							</p>
-						) : null}
-						{selectedNode && selectedNode.displayName.length <= 2 ? (
-							<p
-								style={{
-									fontSize: 12,
-									color: "var(--muted-foreground, #71717a)",
-								}}
-							>
-								Short component names may come from compiled code. Pick a
-								visible element to locate it.
+							<p className="devtools:text-xs devtools:text-muted-foreground">
+								Use Pick element to resolve the source location.
 							</p>
 						) : null}
 
 						{openStatus ? (
 							<output
-								style={{
-									fontSize: 11,
-									color: openStatus.ok
-										? "var(--foreground)"
-										: "var(--destructive)",
-								}}
+								className={`devtools:text-[11px] ${openStatus.ok ? "devtools:text-foreground" : "devtools:text-destructive"}`}
 							>
 								{openStatus.text}
+							</output>
+						) : null}
+						{copyStatus ? (
+							<output
+								aria-live="polite"
+								className="devtools:col-span-full devtools:text-[11px] devtools:text-muted-foreground"
+							>
+								{copyStatus}
 							</output>
 						) : null}
 
@@ -168,23 +153,31 @@ export function ComponentInspector({
 									: undefined
 							}
 						>
-							{selectedDetail && Object.keys(selectedDetail.props).length > 0
-								? formatInspectorValue(selectedDetail.props)
-								: "No props recorded."}
+							{selectedDetail &&
+							Object.keys(selectedDetail.props).length > 0 ? (
+								<EncodedValueBranch
+									value={encodedValues.props}
+									path="props"
+									onCopy={copyValue}
+								/>
+							) : (
+								"No props recorded."
+							)}
 						</InspectorSection>
 
 						<InspectorSection
 							title="Hooks"
 							count={selectedDetail?.hooks.length}
 						>
-							{selectedDetail && selectedDetail.hooks.length > 0
-								? selectedDetail.hooks
-										.map(
-											(hook) =>
-												`${hook.name}\n${formatInspectorValue(hook.value)}`,
-										)
-										.join("\n\n")
-								: "No hooks recorded."}
+							{selectedDetail && selectedDetail.hooks.length > 0 ? (
+								<EncodedValueBranch
+									value={encodedValues.hooks}
+									path="hooks"
+									onCopy={copyValue}
+								/>
+							) : (
+								"No hooks recorded."
+							)}
 						</InspectorSection>
 
 						<InspectorSection
@@ -193,18 +186,30 @@ export function ComponentInspector({
 								selectedDetail && selectedDetail.state !== null ? 1 : undefined
 							}
 						>
-							{selectedDetail && selectedDetail.state !== null
-								? formatInspectorValue(selectedDetail.state)
-								: "No component state."}
+							{selectedDetail && selectedDetail.state !== null ? (
+								<EncodedValueBranch
+									value={encodedValues.state}
+									path="state"
+									onCopy={copyValue}
+								/>
+							) : (
+								"No component state."
+							)}
 						</InspectorSection>
 
 						<InspectorSection
 							title="Context"
 							count={selectedDetail?.context.length}
 						>
-							{selectedDetail && selectedDetail.context.length > 0
-								? formatInspectorValue(selectedDetail.context)
-								: "No context dependencies recorded."}
+							{selectedDetail && selectedDetail.context.length > 0 ? (
+								<EncodedValueBranch
+									value={encodedValues.context}
+									path="context"
+									onCopy={copyValue}
+								/>
+							) : (
+								"No context dependencies recorded."
+							)}
 						</InspectorSection>
 					</div>
 				)}

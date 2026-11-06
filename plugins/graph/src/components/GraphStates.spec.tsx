@@ -1,25 +1,54 @@
 /**
  * @vitest-environment jsdom
  */
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { GraphStates } from "./GraphStates";
 
 describe("GraphStates", () => {
-	it("renders", () => {
-		const view = { status: "available", nodes: [], edges: [] } as never;
-		const { container } = render(
+	it("explains how to start when no component is selected", () => {
+		const view = { status: "empty", nodes: [], edges: [] } as never;
+		render(
 			<GraphStates
 				view={view}
 				runtimeStatus="available"
-				dependenciesCapable={false}
-				dependencySetLoaded={false}
+				dependenciesCapable
+				dependencySetLoaded
 				loading={false}
 				onReload={() => undefined}
 				onResetFilters={() => undefined}
 				hiddenByKind={0}
 			/>,
 		);
-		expect(container).toBeTruthy();
+		expect(screen.getByText("Select a component")).toBeTruthy();
+		expect(
+			screen.getByText(
+				"Choose one in the Components panel to inspect its dependencies.",
+			),
+		).toBeTruthy();
+	});
+
+	it("keeps an empty dependency result compact beside the graph", () => {
+		const view = {
+			status: "empty",
+			rootComponentId: "root",
+			nodes: [],
+			edges: [],
+		} as never;
+		render(
+			<GraphStates
+				view={view}
+				runtimeStatus="available"
+				dependenciesCapable
+				dependencySetLoaded
+				loading={false}
+				onReload={() => undefined}
+				onResetFilters={() => undefined}
+				hiddenByKind={0}
+				compact
+			/>,
+		);
+		expect(screen.getByRole("status")).toBeTruthy();
+		expect(screen.getByText("No reactive dependencies")).toBeTruthy();
 	});
 });

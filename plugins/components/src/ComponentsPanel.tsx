@@ -13,9 +13,12 @@ import type {
 import type { ResolvedElementSource } from "@next-devtools/source-inspector";
 import {
 	Button,
+	Crosshair,
 	ElementHighlight,
 	ElementPicker,
 	PanelHeader,
+	PanelLeft,
+	PanelRight,
 	StatusDot,
 } from "@next-devtools/ui";
 import * as React from "react";
@@ -46,10 +49,14 @@ const UNAVAILABLE_SNAPSHOT: RuntimeServiceSnapshot<ReactRuntimeSnapshot> = {
 	revision: -1,
 };
 
+const rootSelections = new WeakMap<ReactRuntimeService, string>();
+
 export default function ComponentsPanel({
 	registry,
+	highlightUpdates = false,
 }: {
 	registry: PluginRegistry;
+	highlightUpdates?: boolean;
 }) {
 	const service = registry.services.get<ReactRuntimeService>(
 		RUNTIME_SERVICE_IDS.react,
@@ -84,7 +91,9 @@ export default function ComponentsPanel({
 	const [pickedSourceRole, setPickedSourceRole] = React.useState<string | null>(
 		null,
 	);
-	const [rootOverride, setRootOverride] = React.useState<string | null>(null);
+	const [rootOverride, setRootOverride] = React.useState<string | null>(() =>
+		service ? (rootSelections.get(service) ?? null) : null,
+	);
 	const [selectedId, setSelectedId] = React.useState<string | null>(
 		() => snapshot.data.selectedComponentId ?? null,
 	);
@@ -97,6 +106,11 @@ export default function ComponentsPanel({
 		ok: boolean;
 		text: string;
 	} | null>(null);
+	const [highlightedIds, setHighlightedIds] = React.useState<Set<string>>(
+		() => new Set(),
+	);
+	const previousTreeSignature = React.useRef(new Map<string, string>());
+	const highlightTimeout = React.useRef<number | null>(null);
 	const selectionToken = React.useRef(0);
 	const hydratedSelection = React.useRef<string | null>(null);
 
@@ -106,10 +120,64 @@ export default function ComponentsPanel({
 		void service.refreshRoots();
 	}, [service]);
 
+	React.useEffect(() => {
+		const next = new Map(
+			snapshot.data.tree.map((node) => [
+				node.id,
+				JSON.stringify([
+					node.displayName,
+					node.kind,
+					node.parentId,
+					node.childIds,
+					node.hasState,
+					node.source,
+				]),
+			]),
+		);
+		const previous = previousTreeSignature.current;
+		previousTreeSignature.current = next;
+		if (!highlightUpdates || previous.size === 0) {
+			setHighlightedIds((current) =>
+				current.size === 0 ? current : new Set(),
+			);
+			return;
+		}
+
+		const changed = new Set<string>();
+		for (const [id, signature] of next) {
+			if (previous.get(id) !== signature) changed.add(id);
+		}
+		if (changed.size === 0) return;
+		setHighlightedIds(changed);
+		if (highlightTimeout.current !== null) {
+			window.clearTimeout(highlightTimeout.current);
+		}
+		highlightTimeout.current = window.setTimeout(
+			() => setHighlightedIds(new Set()),
+			700,
+		);
+	}, [highlightUpdates, snapshot.data.tree]);
+
+	React.useEffect(
+		() => () => {
+			if (highlightTimeout.current !== null) {
+				window.clearTimeout(highlightTimeout.current);
+			}
+		},
+		[],
+	);
+
 	const roots = snapshot.data.roots;
 	const activeRootId =
 		(rootOverride && roots.includes(rootOverride) ? rootOverride : roots[0]) ??
 		null;
+	const handleRootChange = React.useCallback(
+		(id: string) => {
+			if (service) rootSelections.set(service, id);
+			setRootOverride(id);
+		},
+		[service],
+	);
 
 	// Read the tree for the active root, and again whenever the root changes.
 	React.useEffect(() => {
@@ -245,7 +313,7 @@ export default function ComponentsPanel({
 		snapshot.reason ?? cap?.reason ?? "React bridge is not connected.";
 
 	return (
-		<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+		<div className="devtools:flex devtools:h-full devtools:min-h-0 devtools:flex-col devtools:gap-3 devtools:overflow-auto">
 			<PanelHeader
 				title="Components"
 				actions={
@@ -256,6 +324,7 @@ export default function ComponentsPanel({
 							aria-pressed={picking}
 							onClick={() => setPicking((value) => !value)}
 						>
+							<Crosshair aria-hidden="true" />
 							{picking ? "Picking… (Esc to cancel)" : "Pick element"}
 						</Button>
 					</>
@@ -282,7 +351,7 @@ export default function ComponentsPanel({
 			/>
 
 			{bridgeAvailable ? (
-				<fieldset className="devtools-component-view-switch">
+				<fieldset className="devtools:hidden devtools:items-center devtools:gap-2 devtools:px-2 devtools:py-1 devtools:@max-[760px]/devtools:flex">
 					<legend className="devtools:sr-only">Components view</legend>
 					<Button
 						type="button"
@@ -291,6 +360,7 @@ export default function ComponentsPanel({
 						aria-pressed={mobileView === "tree"}
 						onClick={() => setMobileView("tree")}
 					>
+						<PanelLeft aria-hidden="true" />
 						Tree
 					</Button>
 					<Button
@@ -300,6 +370,7 @@ export default function ComponentsPanel({
 						aria-pressed={mobileView === "inspector"}
 						onClick={() => setMobileView("inspector")}
 					>
+						<PanelRight aria-hidden="true" />
 						Inspector
 					</Button>
 				</fieldset>
@@ -307,13 +378,8 @@ export default function ComponentsPanel({
 
 			{bridgeAvailable ? (
 				<div
-					className="devtools-inspector-split"
+					className="devtools:group devtools:flex devtools:min-h-[240px] devtools:min-w-0 devtools:flex-1 devtools:items-stretch devtools:gap-2 devtools:@max-[760px]/devtools:flex-col"
 					data-mobile-view={mobileView}
-					style={{
-						flex: 1,
-						minHeight: 240,
-						alignItems: "stretch",
-					}}
 				>
 					<ComponentTree
 						key={activeRootId ?? "no-root"}
@@ -321,13 +387,14 @@ export default function ComponentsPanel({
 						roots={roots}
 						activeRootId={activeRootId}
 						selectedId={selectedId}
-						onRootChange={setRootOverride}
+						onRootChange={handleRootChange}
 						onSelect={selectComponent}
 						onRefresh={async () => {
 							const next = await service?.refreshRoots();
 							const root = next?.[0];
 							if (root) await service?.readTree(root);
 						}}
+						highlightedIds={highlightedIds}
 					/>
 					<ComponentInspector
 						selectedId={selectedId}
